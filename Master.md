@@ -8,7 +8,9 @@ to WCAG 2.1 AA.
 
 # ---- G : GOAL ------------------------------
 
-Build an app with :
+Build an app that tells me the top 3 auspicious activities I should do today based on today's weather, my horoscope (western and Chinese) and what I'm feeling today.
+
+The feature
 
 1. Seek Affirmation feature. An input text format window to describe what he/she feels like doing today. Click 'affirm' to get a reading result.
 3. Inspire me feature. A button that generates 3 top auspicious activity to do today. 
