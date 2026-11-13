@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Oracle — Daily Auspicious Activities &amp; Astrology Guide</title>
+    <meta
+      name="description"
+      content="Discover your top 3 auspicious activities today based on Singapore weather, Western & Chinese astrology, and your mood."
+    />
+    <meta property="og:title" content="My Oracle — Daily Auspicious Activities & Astrology Guide" />
+    <meta
+      property="og:description"
+      content="Discover your top 3 auspicious activities today based on Singapore weather, Western & Chinese astrology, and your mood."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <!-- Three-Zone Top Bar Navigation -->
+    <header class="site-header">
+      <div class="header-inner">
+        <!-- Zone 1: Single-line Brand Wordmark -->
+        <a href="#today" class="brand-mark" id="brand-home-link">
+          <svg
+            class="brand-emblem"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 2L14.6 9.4L22 12L14.6 14.6L12 22L9.4 14.6L2 12L9.4 9.4L12 2Z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>My Oracle</span>
+        </a>
+
+        <!-- Zone 2: Desktop Single-Line Nav Links -->
+        <nav class="desktop-nav" aria-label="Primary navigation">
+          <button type="button" class="nav-link is-active" data-nav-target="today" aria-current="page">
+            Today
+          </button>
+          <button type="button" class="nav-link" data-nav-target="profile">
+            Profile
+          </button>
+          <button type="button" class="nav-link" data-nav-target="topup">
+            Top Up
+          </button>
+          <button type="button" class="nav-link" data-nav-target="tracker">
+            Tracker
+          </button>
+        </nav>
+
+        <!-- Zone 3: Single Primary Account / Sign In Action -->
+        <div class="header-action">
+          <button type="button" class="btn btn-primary btn-sm" id="header-auth-btn">
+            Sign In · <span id="header-coin-count" class="tabular-nums">12</span> Coins
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Application Content -->
+    <main id="main-content" class="app-main" tabindex="-1">
+      <!-- Global Status Toast Banner (Accessible Live Region) -->
+      <div id="status-banner" class="status-banner is-hidden" role="status" aria-live="polite">
+        <span id="status-banner-text"></span>
+        <button type="button" class="status-dismiss" id="status-dismiss-btn" aria-label="Dismiss notification">
+          Close
+        </button>
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- VIEW 1: TODAY (MAIN ORACLE PAGE)                      -->
+      <!-- ===================================================== -->
+      <section id="view-today" class="view-section is-active" aria-labelledby="today-heading">
+        <!-- Hero + Live Context Strip -->
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow-meta" id="hero-meta-line">
+              <span id="hero-date-text">Today</span>
+              <span aria-hidden="true">·</span>
+              <span id="hero-astro-summary">Set your birthday to unlock your chart</span>
+            </p>
+            <h1 id="today-heading" class="hero-title">
+              What is the auspicious move today?
+            </h1>
+            <p class="hero-subtitle">
+              Blend Singapore weather, Western &amp; Chinese astrology (Zi Wei Dou Shu), and how you feel into three clear ideas for your day.
+            </p>
+          </div>
+
+          <!-- Weather & Wallet Context Card -->
+          <aside class="context-card" aria-label="Current weather and coin wallet">
+            <div class="context-weather-row">
+              <div class="weather-header">
+                <div class="weather-title-group">
+                  <span class="weather-label">Now Weather</span>
+                  <strong class="weather-temp tabular-nums" id="weather-temp-display">31°C</strong>
+                </div>
+                <span class="weather-condition" id="weather-condition-display">Partly Cloudy · Breezy</span>
+              </div>
+
+              <div class="weather-controls">
+                <div class="field-group">
+                  <label for="location-select" class="field-label">Your location</label>
+                  <select id="location-select" class="field-control">
+                    <option value="central">Singapore · Central (Orchard / Bugis)</option>
+                    <option value="east">Singapore · East (Tampines / Katong)</option>
+                    <option value="west">Singapore · West (Jurong / Clementi)</option>
+                    <option value="north">Singapore · North (Woodlands / Yishun)</option>
+                    <option value="south">Singapore · South (Tiong Bahru / Sentosa)</option>
+                    <option value="custom">Custom location…</option>
+                  </select>
+                </div>
+
+                <div class="field-group is-hidden" id="custom-location-wrap">
+                  <label for="custom-location-input" class="field-label">Enter city or neighbourhood</label>
+                  <input
+                    id="custom-location-input"
+                    type="text"
+                    class="field-control"
+                    maxlength="60"
+                    placeholder="e.g., Holland Village, Singapore"
+                  />
+                </div>
+
+                <div class="weather-meta-footer">
+                  <span id="weather-advice-text">Great for breezy walks before 4 PM; carry a compact umbrella.</span>
+                  <button type="button" class="link-action" id="cycle-weather-btn">
+                    Switch weather preview
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider-line" aria-hidden="true"></div>
+
+            <div class="context-wallet-row">
+              <div class="wallet-balance-block">
+                <span class="wallet-label">Oracle Wallet</span>
+                <div class="wallet-value-line">
+                  <strong class="wallet-coins tabular-nums" id="today-coin-balance">12</strong>
+                  <span class="wallet-unit">Coins</span>
+                </div>
+              </div>
+              <div class="wallet-actions">
+                <button type="button" class="btn btn-mint btn-sm" id="daily-checkin-btn">
+                  Daily Check-In (+5)
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" data-nav-target="topup">
+                  Top Up
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <!-- Core Interactive Workspace: Seek Affirmation / Inspire Me + Astrology Personalisation -->
+        <div class="workspace-grid">
+          <!-- Feature 1 & 2: Seek Affirmation & Inspire Me -->
+          <section class="surface-card oracle-engine-card" aria-labelledby="engine-heading">
+            <div class="card-head">
+              <div>
+                <h2 id="engine-heading" class="card-title">Ask Your Oracle</h2>
+                <p class="card-desc">
+                  Share what you feel like doing today for an affirmation, or let the stars inspire you.
+                </p>
+              </div>
+            </div>
+
+            <form id="affirm-form" class="oracle-form" novalidate>
+              <div class="field-group">
+                <label for="feeling-input" class="field-label">
+                  What do you feel like doing today?
+                </label>
+                <textarea
+                  id="feeling-input"
+                  class="field-control field-textarea"
+                  rows="3"
+                  maxlength="240"
+                  placeholder="e.g., Catch up with a friend in Tiong Bahru, ask my boss for flexible hours, or sign a lease…"
+                  aria-describedby="feeling-hint feeling-error"
+                ></textarea>
+                <div class="field-footer">
+                  <span id="feeling-hint" class="field-hint">
+                    Plain English works best. Avoid typing full IC numbers or private addresses.
+                  </span>
+                  <span id="feeling-char-count" class="field-hint tabular-nums">0/240</span>
+                </div>
+                <p id="feeling-error" class="field-error is-hidden" role="alert"></p>
+              </div>
+
+              <!-- Quick Prompt Suggestions -->
+              <div class="prompt-suggestions" aria-label="Quick mood ideas">
+                <button type="button" class="prompt-btn" data-prompt="Ask for a raise or pitch a work idea today">
+                  Pitch a work idea
+                </button>
+                <button type="button" class="prompt-btn" data-prompt="Solo matcha cafe date and journaling">
+                  Solo cafe &amp; journal
+                </button>
+                <button type="button" class="prompt-btn" data-prompt="Sign a new contract or make a big purchase">
+                  Sign a contract
+                </button>
+                <button type="button" class="prompt-btn" data-prompt="Declutter my room and reset my sleep schedule">
+                  Home reset
+                </button>
+              </div>
+
+              <div class="form-split-row">
+                <div class="field-group">
+                  <label for="reading-date-input" class="field-label">Target day</label>
+                  <input id="reading-date-input" type="date" class="field-control" />
+                </div>
+
+                <div class="field-group">
+                  <label for="segment-select" class="field-label">Life stage focus</label>
+                  <select id="segment-select" class="field-control">
+                    <option value="adult">Working Professional (Career, Wellness, Social)</option>
+                    <option value="teen">Student / Teen (Study, Hangouts, Creative)</option>
+                    <option value="elderly">Retiree / Elderly (Culture, Light Exercise, Family)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Primary Action Row: Affirm vs Inspire Me -->
+              <div class="oracle-cta-row">
+                <button type="submit" class="btn btn-primary btn-lg" id="affirm-submit-btn">
+                  Affirm (1 Coin)
+                </button>
+                <button type="button" class="btn btn-marigold btn-lg" id="inspire-btn">
+                  Inspire Me (2 Coins)
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Feature 3: Personalisation with Astrology -->
+          <section class="surface-card astrology-card" aria-labelledby="astro-heading">
+            <div class="card-head">
+              <div>
+                <h2 id="astro-heading" class="card-title">Personalise with Astrology</h2>
+                <p class="card-desc">
+                  Add your birth details to tailor readings with Western Zodiac &amp; Chinese Zi Wei Dou Shu.
+                </p>
+              </div>
+            </div>
+
+            <form id="quick-astro-form" class="astro-form" novalidate>
+              <div class="field-group">
+                <label for="quick-dob" class="field-label">Birthday (Date of Birth)</label>
+                <input id="quick-dob" type="date" class="field-control" />
+              </div>
+
+              <div class="form-split-row">
+                <div class="field-group">
+                  <label for="quick-birth-time" class="field-label">Birth time</label>
+                  <input id="quick-birth-time" type="time" class="field-control" />
+                </div>
+
+                <div class="field-group">
+                  <label for="quick-birth-place" class="field-label">Birth location</label>
+                  <input
+                    id="quick-birth-place"
+                    type="text"
+                    class="field-control"
+                    maxlength="60"
+                    placeholder="e.g., Singapore"
+                  />
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-secondary btn-full" id="apply-astro-btn">
+                Personalise My Results
+              </button>
+            </form>
+
+            <div class="divider-line" aria-hidden="true"></div>
+
+            <!-- Live Derived Chart Readout (Never repeats raw DOB back) -->
+            <div class="chart-readout" aria-live="polite">
+              <div class="chart-row">
+                <span class="chart-label">Western Sun Sign</span>
+                <strong class="chart-value" id="chart-western-sign">Not set yet</strong>
+              </div>
+              <div class="chart-row">
+                <span class="chart-label">Chinese Zodiac</span>
+                <strong class="chart-value" id="chart-chinese-sign">Not set yet</strong>
+              </div>
+              <div class="chart-row">
+                <span class="chart-label">Zi Wei Palace Focus</span>
+                <strong class="chart-value" id="chart-ziwei-palace">General Fortune</strong>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Top 3 Auspicious Activities Results Panel -->
+        <section class="results-section" aria-labelledby="results-heading" aria-live="polite">
+          <div class="results-header">
+            <div>
+              <h2 id="results-heading" class="section-title">Your Top 3 Auspicious Activities</h2>
+              <p class="section-subtitle" id="results-meta-line">
+                Click Affirm or Inspire Me above to generate your personalised top three moves.
+              </p>
+            </div>
+            <div class="results-luck-info is-hidden" id="results-luck-info">
+              <span>Auspicious Window: <strong id="lucky-window-text" class="tabular-nums">11:00 – 13:00</strong></span>
+              <span aria-hidden="true">·</span>
+              <span>Lucky Hue: <strong id="lucky-hue-text">Electric Violet</strong></span>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div id="results-empty" class="empty-state-box">
+            <h3 class="empty-title">Ready when you are</h3>
+            <p class="empty-copy">
+              Type something you have on your mind and click <strong>Affirm (1 Coin)</strong>, or tap <strong>Inspire Me (2 Coins)</strong> for a fresh Singapore-ready trio.
+            </p>
+          </div>
+
+          <!-- Loading State -->
+          <div id="results-loading" class="loading-box is-hidden">
+            <p class="loading-text">Aligning today's weather, Western sign, and Chinese almanac…</p>
+          </div>
+
+          <!-- Results Grid (3 Cards) -->
+          <div id="results-grid" class="activities-grid is-hidden"></div>
+
+          <!-- Ethical Guardrail #6: AI-Generated Output Disclosure -->
+          <p id="ai-disclosure" class="ai-disclosure is-hidden">
+            AI-generated front-end preview for daily inspiration and entertainment. Connect your backend API later for live horoscope &amp; almanac feeds.
+          </p>
+        </section>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- VIEW 2: USER PROFILE & COIN WALLET SUBPAGE            -->
+      <!-- ===================================================== -->
+      <section id="view-profile" class="view-section" aria-labelledby="profile-heading">
+        <div class="page-intro">
+          <h1 id="profile-heading" class="page-title">Your Profile &amp; Wallet</h1>
+          <p class="page-subtitle">
+            Keep your birth chart details updated for sharper daily guidance and manage your Oracle coins.
+          </p>
+        </div>
+
+        <div class="profile-grid">
+          <!-- Profile Details Form -->
+          <section class="surface-card" aria-labelledby="profile-form-heading">
+            <h2 id="profile-form-heading" class="card-title">Personal &amp; Astrology Details</h2>
+            <form id="profile-form" class="profile-form" novalidate>
+              <div class="form-split-row">
+                <div class="field-group">
+                  <label for="profile-name" class="field-label">Display name</label>
+                  <input
+                    id="profile-name"
+                    type="text"
+                    class="field-control"
+                    maxlength="40"
+                    placeholder="e.g., Mei Ling"
+                  />
+                </div>
+                <div class="field-group">
+                  <label for="profile-email" class="field-label">Email address</label>
+                  <input
+                    id="profile-email"
+                    type="email"
+                    class="field-control"
+                    maxlength="80"
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+
+              <div class="form-split-row">
+                <div class="field-group">
+                  <label for="profile-dob" class="field-label">Birthday (Date of Birth)</label>
+                  <input id="profile-dob" type="date" class="field-control" />
+                </div>
+                <div class="field-group">
+                  <label for="profile-birth-time" class="field-label">Time of birth</label>
+                  <input id="profile-birth-time" type="time" class="field-control" />
+                </div>
+              </div>
+
+              <div class="form-split-row">
+                <div class="field-group">
+                  <label for="profile-birth-place" class="field-label">Location of birth</label>
+                  <input
+                    id="profile-birth-place"
+                    type="text"
+                    class="field-control"
+                    maxlength="60"
+                    placeholder="e.g., Singapore"
+                  />
+                </div>
+                <div class="field-group">
+                  <label for="profile-segment" class="field-label">Life stage</label>
+                  <select id="profile-segment" class="field-control">
+                    <option value="adult">Working Professional</option>
+                    <option value="teen">Student / Teen</option>
+                    <option value="elderly">Retiree / Elderly</option>
+                  </select>
+                </div>
+              </div>
+
+              <fieldset class="interests-fieldset">
+                <legend class="field-label">Preferred activity themes</legend>
+                <div class="checkbox-grid">
+                  <label class="checkbox-item">
+                    <input type="checkbox" name="interest" value="career" checked />
+                    <span>Career &amp; Finance</span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" name="interest" value="wellness" checked />
+                    <span>Wellness &amp; Recharge</span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" name="interest" value="social" />
+                    <span>Social &amp; Cafes</span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox" name="interest" value="culture" />
+                    <span>Culture &amp; Fengshui</span>
+                  </label>
+                </div>
+              </fieldset>
+
+              <div class="form-actions-row">
+                <button type="submit" class="btn btn-primary">Save Profile</button>
+                <button type="button" class="btn btn-secondary" id="profile-reset-btn">
+                  Reset Defaults
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Coin Wallet & Ledger -->
+          <aside class="surface-card wallet-card" aria-labelledby="wallet-heading">
+            <h2 id="wallet-heading" class="card-title">Coin Wallet</h2>
+            <div class="wallet-hero-box">
+              <div>
+                <span class="wallet-label">Available Balance</span>
+                <div class="wallet-big-balance">
+                  <strong class="tabular-nums" id="profile-coin-balance">12</strong>
+                  <span>Coins</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" data-nav-target="topup">
+                Buy Coins
+              </button>
+            </div>
+
+            <div class="earn-coins-guide">
+              <h3 class="subhead">Ways to collect coins</h3>
+              <ul class="clean-list">
+                <li>
+                  <span>Daily Check-In</span>
+                  <button type="button" class="btn btn-mint btn-sm" id="profile-checkin-btn">
+                    Claim +5 Coins
+                  </button>
+                </li>
+                <li>
+                  <span>Accept a proposed activity</span>
+                  <span class="tabular-nums text-muted">+2 Coins each</span>
+                </li>
+                <li>
+                  <span>Top up via Card, Apple Pay or PayNow</span>
+                  <button type="button" class="link-action" data-nav-target="topup">
+                    Go to Top Up
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <div class="divider-line" aria-hidden="true"></div>
+
+            <div>
+              <h3 class="subhead">Recent Coin History</h3>
+              <ul id="wallet-ledger-list" class="ledger-list"></ul>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- VIEW 3: COIN TOP UP SUBPAGE                           -->
+      <!-- ===================================================== -->
+      <section id="view-topup" class="view-section" aria-labelledby="topup-heading">
+        <div class="page-intro">
+          <h1 id="topup-heading" class="page-title">Top Up Oracle Coins</h1>
+          <p class="page-subtitle">
+            Recharge your wallet to unlock daily affirmations and personalised star readings. Front-end checkout preview only.
+          </p>
+        </div>
+
+        <div class="topup-grid">
+          <!-- Bundle Selector -->
+          <section class="surface-card" aria-labelledby="bundle-heading">
+            <h2 id="bundle-heading" class="card-title">1. Choose a Coin Pack</h2>
+            <div class="bundle-list" role="radiogroup" aria-labelledby="bundle-heading">
+              <button
+                type="button"
+                class="bundle-option is-selected"
+                data-bundle-coins="15"
+                data-bundle-price="2.90"
+                aria-pressed="true"
+              >
+                <div class="bundle-main">
+                  <strong class="bundle-coins tabular-nums">15 Coins</strong>
+                  <span class="bundle-desc">Starter Pack · 7 Inspire Me readings</span>
+                </div>
+                <span class="bundle-price tabular-nums">S$2.90</span>
+              </button>
+
+              <button
+                type="button"
+                class="bundle-option"
+                data-bundle-coins="50"
+                data-bundle-price="7.90"
+                aria-pressed="false"
+              >
+                <div class="bundle-main">
+                  <strong class="bundle-coins tabular-nums">50 Coins</strong>
+                  <span class="bundle-desc">Monthly Fav · Best value for daily check-ins</span>
+                </div>
+                <span class="bundle-price tabular-nums">S$7.90</span>
+              </button>
+
+              <button
+                type="button"
+                class="bundle-option"
+                data-bundle-coins="120"
+                data-bundle-price="14.90"
+                aria-pressed="false"
+              >
+                <div class="bundle-main">
+                  <strong class="bundle-coins tabular-nums">120 Coins</strong>
+                  <span class="bundle-desc">All-Season Oracle · Never run low</span>
+                </div>
+                <span class="bundle-price tabular-nums">S$14.90</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- Payment Method & Checkout -->
+          <section class="surface-card" aria-labelledby="payment-heading">
+            <h2 id="payment-heading" class="card-title">2. Payment Method</h2>
+
+            <div class="payment-tabs" role="tablist" aria-label="Payment method">
+              <button
+                type="button"
+                class="payment-tab is-active"
+                role="tab"
+                aria-selected="true"
+                data-pay-method="card"
+              >
+                Credit Card
+              </button>
+              <button
+                type="button"
+                class="payment-tab"
+                role="tab"
+                aria-selected="false"
+                data-pay-method="applepay"
+              >
+                Apple Pay
+              </button>
+              <button
+                type="button"
+                class="payment-tab"
+                role="tab"
+                aria-selected="false"
+                data-pay-method="paynow"
+              >
+                PayNow
+              </button>
+            </div>
+
+            <form id="topup-form" class="topup-form" novalidate>
+              <!-- Card Fields -->
+              <div id="card-fields" class="payment-panel">
+                <div class="field-group">
+                  <label for="card-name" class="field-label">Name on card</label>
+                  <input
+                    id="card-name"
+                    type="text"
+                    class="field-control"
+                    maxlength="50"
+                    placeholder="e.g., Tan Mei Ling"
+                  />
+                </div>
+                <div class="field-group">
+                  <label for="card-number" class="field-label">Card number (demo format)</label>
+                  <input
+                    id="card-number"
+                    type="text"
+                    inputmode="numeric"
+                    class="field-control tabular-nums"
+                    maxlength="19"
+                    placeholder="4242 4242 4242 4242"
+                  />
+                </div>
+                <div class="form-split-row">
+                  <div class="field-group">
+                    <label for="card-expiry" class="field-label">Expiry (MM/YY)</label>
+                    <input
+                      id="card-expiry"
+                      type="text"
+                      class="field-control tabular-nums"
+                      maxlength="5"
+                      placeholder="08/29"
+                    />
+                  </div>
+                  <div class="field-group">
+                    <label for="card-cvc" class="field-label">Security code</label>
+                    <input
+                      id="card-cvc"
+                      type="text"
+                      inputmode="numeric"
+                      class="field-control tabular-nums"
+                      maxlength="4"
+                      placeholder="123"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Apple Pay Preview Panel -->
+              <div id="applepay-fields" class="payment-panel is-hidden">
+                <p class="payment-note">
+                  Express Apple Pay preview ready. Tap Complete Top Up below to simulate adding coins to your wallet without real charges.
+                </p>
+              </div>
+
+              <!-- PayNow Preview Panel -->
+              <div id="paynow-fields" class="payment-panel is-hidden">
+                <p class="payment-note">
+                  Instant Singapore PayNow preview ready. No real funds will be deducted in this front-end interface.
+                </p>
+              </div>
+
+              <p id="topup-error" class="field-error is-hidden" role="alert"></p>
+
+              <div class="checkout-summary">
+                <span>Selected: <strong id="summary-bundle-text" class="tabular-nums">15 Coins</strong></span>
+                <strong class="summary-total tabular-nums" id="summary-price-text">S$2.90</strong>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-full btn-lg" id="complete-topup-btn">
+                Complete Top Up
+              </button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- VIEW 4: ACTIVITY TRACKER & SENTIMENTS                 -->
+      <!-- ===================================================== -->
+      <section id="view-tracker" class="view-section" aria-labelledby="tracker-heading">
+        <div class="page-intro">
+          <h1 id="tracker-heading" class="page-title">Activity Tracker &amp; Notes</h1>
+          <p class="page-subtitle">
+            Review accepted auspicious activities and jot down any sentiments or encounters from your day.
+          </p>
+        </div>
+
+        <div class="tracker-toolbar">
+          <div class="filter-tabs" role="tablist" aria-label="Filter tracked activities">
+            <button type="button" class="filter-tab is-active" data-tracker-filter="all" role="tab" aria-selected="true">
+              All
+            </button>
+            <button type="button" class="filter-tab" data-tracker-filter="planned" role="tab" aria-selected="false">
+              Planned
+            </button>
+            <button type="button" class="filter-tab" data-tracker-filter="completed" role="tab" aria-selected="false">
+              Completed
+            </button>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" data-nav-target="today">
+            Find More Activities
+          </button>
+        </div>
+
+        <div id="tracker-empty" class="empty-state-box">
+          <h2 class="empty-title">No activities saved yet</h2>
+          <p class="empty-copy">
+            Generate a reading on Today and click <strong>Accept Activity (+2 Coins)</strong> to track it and record how it went.
+          </p>
+        </div>
+
+        <div id="tracker-list" class="tracker-list"></div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <p class="footer-copy">
+          My Oracle · Front-end preview for Singapore daily inspiration · AI-generated guidance
+        </p>
+        <div class="footer-links">
+          <button type="button" class="link-action" data-nav-target="today">Today</button>
+          <button type="button" class="link-action" data-nav-target="profile">Profile</button>
+          <button type="button" class="link-action" data-nav-target="topup">Top Up</button>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Mobile Fixed Thumb Navigation Bar (< 768px) -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+      <button type="button" class="mobile-tab is-active" data-nav-target="today" aria-current="page">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M12 2L14.6 9.4L22 12L14.6 14.6L12 22L9.4 14.6L2 12L9.4 9.4L12 2Z" />
+        </svg>
+        <span>Today</span>
+      </button>
+      <button type="button" class="mobile-tab" data-nav-target="profile">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+        </svg>
+        <span>Profile</span>
+      </button>
+      <button type="button" class="mobile-tab" data-nav-target="topup">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v10M8.5 10.5h5a2 2 0 0 1 0 4h-5" />
+        </svg>
+        <span>Top Up</span>
+      </button>
+      <button type="button" class="mobile-tab" data-nav-target="tracker">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M9 11l3 3L22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+        <span>Tracker</span>
+      </button>
+    </nav>
+
+    <!-- Accessible Login / Sign Up Modal -->
+    <div id="auth-modal-backdrop" class="modal-backdrop is-hidden" role="presentation">
+      <div
+        id="auth-modal"
+        class="modal-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+      >
+        <div class="modal-header">
+          <h2 id="auth-modal-title" class="card-title">Welcome to My Oracle</h2>
+          <button type="button" class="modal-close-btn" id="auth-close-btn" aria-label="Close sign in dialog">
+            Close
+          </button>
+        </div>
+
+        <div class="payment-tabs" role="tablist" aria-label="Account mode">
+          <button type="button" class="payment-tab is-active" id="tab-login" role="tab" aria-selected="true">
+            Log In
+          </button>
+          <button type="button" class="payment-tab" id="tab-signup" role="tab" aria-selected="false">
+            Sign Up
+          </button>
+        </div>
+
+        <form id="auth-form" class="auth-form" novalidate>
+          <div class="field-group is-hidden" id="auth-name-wrap">
+            <label for="auth-name" class="field-label">Your name</label>
+            <input
+              id="auth-name"
+              type="text"
+              class="field-control"
+              maxlength="40"
+              placeholder="e.g., Chloe Tan"
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="auth-email" class="field-label">Email address</label>
+            <input
+              id="auth-email"
+              type="email"
+              class="field-control"
+              maxlength="80"
+              placeholder="you@example.com"
+              required
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="auth-password" class="field-label">Password</label>
+            <input
+              id="auth-password"
+              type="password"
+              class="field-control"
+              minlength="6"
+              maxlength="64"
+              placeholder="At least 6 characters"
+              required
+            />
+          </div>
+
+          <p id="auth-error" class="field-error is-hidden" role="alert"></p>
+
+          <button type="submit" class="btn btn-primary btn-full" id="auth-submit-btn">
+            Log In
+          </button>
+        </form>
+
+        <div id="auth-signed-in-panel" class="signed-in-panel is-hidden">
+          <p class="signed-in-note">
+            Signed in as <strong id="signed-in-name">Guest</strong>. Your coins and astrology preferences are saved in this browser.
+          </p>
+          <button type="button" class="btn btn-secondary btn-full" id="logout-btn">
+            Log Out
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
