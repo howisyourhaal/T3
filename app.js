@@ -114,6 +114,14 @@ function loadInitialState() {
 let appState = loadInitialState();
 let lastFocusedElement = null;
 let isAstroPanelOpen = false;
+let liveContextState = {
+  useLiveWeather: true,
+  isLoadingLive: false,
+  weather: null,
+  horoscope: null,
+  purpleStar: null,
+  lastFetchedAt: "",
+};
 
 /**
  * Saves the current appState object into the browser's localStorage so refreshes
@@ -332,19 +340,21 @@ function hideStatusBanner() {
  * by toggling CSS classes on the HTML <section> tags and updating active nav tabs.
  */
 function switchView(targetView) {
-  appState.activeView = targetView;
+  const allowedViews = new Set(["today", "profile", "topup"]);
+  const safeView = allowedViews.has(targetView) ? targetView : "today";
+  appState.activeView = safeView;
   saveState();
 
   const sections = document.querySelectorAll(".view-section");
   sections.forEach((sec) => {
-    const isTarget = sec.id === `view-${targetView}`;
+    const isTarget = sec.id === `view-${safeView}`;
     sec.classList.toggle("is-active", isTarget);
   });
 
   const navButtons = document.querySelectorAll("[data-nav-target]");
   navButtons.forEach((btn) => {
     const target = btn.getAttribute("data-nav-target");
-    const matches = target === targetView;
+    const matches = target === safeView;
     if (btn.classList.contains("nav-link") || btn.classList.contains("mobile-tab")) {
       btn.classList.toggle("is-active", matches);
       if (matches) {
@@ -438,15 +448,39 @@ function renderLedger() {
   });
 }
 
+function getActiveWeatherSummary() {
+  if (liveContextState.useLiveWeather && liveContextState.weather && liveContextState.weather.ok) {
+    const w = liveContextState.weather;
+    const tempDisplay =
+      w.tempLowC !== null && w.tempHighC !== null ? `${w.tempLowC}–${w.tempHighC}°C` : `${w.tempC}°C`;
+    return {
+      tempText: tempDisplay,
+      tempC: w.tempC,
+      condition: w.periodLabel ? `${w.condition} (${w.periodLabel})` : w.condition,
+      advice: w.advice,
+      isOutdoorFriendly: w.isOutdoorFriendly,
+    };
+  }
+  const preset = WEATHER_PRESETS[appState.weatherIndex % WEATHER_PRESETS.length];
+  return {
+    tempText: `${preset.tempC}°C`,
+    tempC: preset.tempC,
+    condition: preset.condition,
+    advice: preset.advice,
+    isOutdoorFriendly: preset.isOutdoorFriendly,
+  };
+}
+
 /**
- * Updates the inline Singapore weather readout next to the date in the hero.
+ * Updates the inline Singapore weather readout next to the date in the hero
+ * using live NEA 24-hour forecast data (or fallback preset).
  */
 function renderWeatherCard() {
-  const weather = WEATHER_PRESETS[appState.weatherIndex % WEATHER_PRESETS.length];
+  const weather = getActiveWeatherSummary();
   const tempEl = document.getElementById("weather-temp-display");
   const condEl = document.getElementById("weather-condition-display");
 
-  if (tempEl) tempEl.textContent = `${weather.tempC}°C`;
+  if (tempEl) tempEl.textContent = weather.tempText;
   if (condEl) condEl.textContent = weather.condition;
 }
 
@@ -472,6 +506,9 @@ function renderAstrologyAndProfileForms() {
   const wEl = document.getElementById("chart-western-sign");
   const cEl = document.getElementById("chart-chinese-sign");
   const zEl = document.getElementById("chart-ziwei-palace");
+  const pStarEl = document.getElementById("chart-purple-star");
+  const horoEl = document.getElementById("chart-horoscope-snippet");
+
   if (wEl) wEl.textContent = western ? `${western.name} (${western.element})` : "Not set yet";
   if (cEl) cEl.textContent = chinese ? `${chinese.element} ${chinese.animal}` : "Not set yet";
   if (zEl) zEl.textContent = chinese ? chinese.palace : "General Fortune";
@@ -497,6 +534,31 @@ function renderAstrologyAndProfileForms() {
       : hasChart
         ? "Edit Birthday"
         : "Personalise with Birthday";
+  }
+
+  if (pStarEl) {
+    const ps = liveContextState.purpleStar;
+    if (ps && ps.ok && ps.mainStar) {
+      const prefix = ps.usingDefaultSample ? "Sample: " : "";
+      const dm = ps.bazi?.dayMasterElement ? ` · ${ps.bazi.dayMaster}${ps.bazi.dayMasterElement}` : "";
+      pStarEl.textContent = `${prefix}${ps.mainStar.pinyin} (${ps.mainStar.meaning})${dm}`;
+    } else if (liveContextState.isLoadingLive) {
+      pStarEl.textContent = "Loading chart…";
+    } else {
+      pStarEl.textContent = "Unavailable";
+    }
+  }
+
+  if (horoEl) {
+    const h = liveContextState.horoscope;
+    if (h && h.ok && h.horoscope) {
+      const sentences = h.horoscope.split(/(?<=[.!?])\s+/).slice(0, 2).join(" ");
+      horoEl.textContent = `${h.sign} (${h.date || "Today"}): ${sentences}`;
+    } else if (liveContextState.isLoadingLive) {
+      horoEl.textContent = "Loading today's live horoscope…";
+    } else {
+      horoEl.textContent = "Live daily horoscope will appear here once connected.";
+    }
   }
 
   const quickDob = document.getElementById("quick-dob");
@@ -931,17 +993,24 @@ function renderResultsSection() {
     grid.innerHTML = "";
   }
   if (luckInfo) luckInfo.classList.remove("is-hidden");
-  if (disclosure) disclosure.classList.remove("is-hidden");
+  if (disclosure) {
+    disclosure.classList.remove("is-hidden");
+    disclosure.textContent = reading.aiGenerated
+      ? "AI-generated guidance (Gemini) grounded in live Singapore 24-hour weather, daily horoscope, and Zi Wei Dou Shu chart feeds."
+      : "Generated for daily inspiration and entertainment using live Singapore 24-hour weather, daily horoscope, and Zi Wei Dou Shu chart feeds.";
+  }
 
   const windowText = document.getElementById("lucky-window-text");
   const hueText = document.getElementById("lucky-hue-text");
   if (windowText) windowText.textContent = reading.luckyWindow;
   if (hueText) hueText.textContent = reading.luckyHue;
   if (metaLine) {
+    const formattedDate = reading.dateLabel || formatReadableDate(reading.date);
+    const periodChunk = reading.timePeriodLabel ? ` ${reading.timePeriodLabel}` : "";
     metaLine.textContent =
       reading.mode === "affirm"
-        ? `Best-day check for ${reading.dateLabel || reading.date} (${reading.verdictLabel || "Affirmation"}) · Accept any move below to earn +2 Coins.`
-        : `Today's ${reading.timePeriodLabel || ""} inspiration (${reading.dateLabel || reading.date}) · Accept any move below to earn +2 Coins.`;
+        ? `Best-day check for ${formattedDate} (${reading.verdictLabel || "Affirmation"}) · Accept any move below to earn +2 Coins.`
+        : `Today's${periodChunk} inspiration (${formattedDate}) · Accept any move below to earn +2 Coins.`;
   }
 
   reading.activities.forEach((act) => {
@@ -995,7 +1064,7 @@ function renderResultsSection() {
     acceptBtn.type = "button";
     acceptBtn.className = alreadyAccepted ? "btn btn-secondary btn-full" : "btn btn-mint btn-full";
     acceptBtn.disabled = alreadyAccepted;
-    acceptBtn.textContent = alreadyAccepted ? "Saved to Tracker" : "Accept Activity (+2 Coins)";
+    acceptBtn.textContent = alreadyAccepted ? "Accepted (+2 Coins)" : "Accept Activity (+2 Coins)";
     acceptBtn.addEventListener("click", () => handleAcceptActivity(act));
 
     card.appendChild(top);
@@ -1005,7 +1074,7 @@ function renderResultsSection() {
 }
 
 /**
- * Adds a proposed activity to the user's Activity Tracker and rewards +2 Coins
+ * Adds a proposed activity to the user's accepted list and rewards +2 Coins
  * to their wallet, as described in the project brief.
  */
 function handleAcceptActivity(activity) {
@@ -1029,19 +1098,76 @@ function handleAcceptActivity(activity) {
   renderHeaderAndWallet();
   renderResultsSection();
   renderTrackerList();
-  showStatusBanner("Activity saved to Tracker! You earned +2 Coins.");
+  showStatusBanner("Activity accepted! You earned +2 Coins.");
 }
 
 /**
- * Runs a reading ("affirm" costs 1 coin, "inspire" costs 2 coins), checks wallet
- * balance first, updates the UI smoothly, and logs the coin transaction.
+ * Pulls live weather, Western horoscope, and Purple Star chart data from the
+ * serverless /api/live-data endpoint and updates the Today view.
  */
-function runOracleReading(mode) {
+async function fetchLiveOracleContext() {
+  liveContextState.isLoadingLive = true;
+  renderAstrologyAndProfileForms();
+
+  const western = getWesternSign(appState.user.dob);
+  const region = ["central", "east", "west", "north", "south"].includes(appState.locationKey)
+    ? appState.locationKey
+    : "central";
+
+  const params = new URLSearchParams({
+    region,
+    sign: (western ? western.name : "aquarius").toLowerCase(),
+  });
+
+  if (appState.user.dob) {
+    params.set("date", appState.user.dob);
+  }
+  if (appState.user.birthTime && /^\d{2}:\d{2}$/.test(appState.user.birthTime)) {
+    const [h, m] = appState.user.birthTime.split(":");
+    params.set("hour", h);
+    params.set("minute", m);
+  }
+  if (appState.user.birthPlace) {
+    params.set("birthPlace", appState.user.birthPlace);
+  }
+
+  try {
+    const res = await fetch(`/api/live-data?${params.toString()}`);
+    if (res.ok) {
+      const payload = await res.json();
+      if (payload && payload.sources) {
+        liveContextState.weather = payload.sources.weather || null;
+        liveContextState.horoscope = payload.sources.horoscope || null;
+        liveContextState.purpleStar = payload.sources.purpleStar || null;
+        liveContextState.lastFetchedAt = payload.fetchedAt || "";
+      }
+    }
+  } catch {
+    // Keep existing or fallback local data if offline
+  } finally {
+    liveContextState.isLoadingLive = false;
+    renderWeatherCard();
+    renderAstrologyAndProfileForms();
+  }
+}
+
+/**
+ * Runs a reading ("affirm" costs 1 coin, "inspire" costs 2 coins) via the
+ * serverless /api/insight endpoint (with local fallback), updates the UI,
+ * and logs the coin transaction.
+ */
+async function runOracleReading(mode) {
   const feelingInput = document.getElementById("feeling-input");
   const feelingError = document.getElementById("feeling-error");
   const targetDateInput = document.getElementById("reading-date-input");
   const insufficientBar = document.getElementById("insufficient-coins-bar");
   const insufficientText = document.getElementById("insufficient-coins-text");
+  const resultsSection = document.getElementById("results-section");
+  const loadingBox = document.getElementById("results-loading");
+  const emptyBox = document.getElementById("results-empty");
+  const grid = document.getElementById("results-grid");
+  const affirmBtn = document.getElementById("affirm-submit-btn");
+  const inspireBtn = document.getElementById("inspire-btn");
 
   if (feelingError) {
     feelingError.classList.add("is-hidden");
@@ -1073,6 +1199,68 @@ function runOracleReading(mode) {
     return;
   }
 
+  const targetDate =
+    mode === "inspire"
+      ? getTodayDateString()
+      : targetDateInput && targetDateInput.value
+        ? targetDateInput.value
+        : getTodayDateString();
+  const western = getWesternSign(appState.user.dob);
+  const chinese = getChineseAstrology(appState.user.dob, appState.user.birthTime);
+  const timeCtx = getTimeOfDayContext();
+
+  if (resultsSection) resultsSection.classList.remove("is-hidden");
+  if (loadingBox) loadingBox.classList.remove("is-hidden");
+  if (emptyBox) emptyBox.classList.add("is-hidden");
+  if (grid) grid.classList.add("is-hidden");
+  if (affirmBtn) affirmBtn.disabled = true;
+  if (inspireBtn) inspireBtn.disabled = true;
+
+  let reading = null;
+  try {
+    const response = await fetch("/api/insight", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode,
+        feeling: feelingText,
+        segment: appState.user.segment || "adult",
+        region: "central",
+        location: "Singapore",
+        targetDate,
+        timeOfDay: `${timeCtx.label} (${timeCtx.formattedTime})`,
+        westernSign: western ? western.name.toLowerCase() : "aquarius",
+        chineseZodiac: chinese ? `${chinese.element} ${chinese.animal}` : "",
+        dob: appState.user.dob || "",
+        birthTime: appState.user.birthTime || "",
+        birthPlace: appState.user.birthPlace || "Singapore",
+      }),
+    });
+
+    if (response.ok) {
+      const payload = await response.json();
+      if (payload?.liveData?.sources) {
+        liveContextState.weather = payload.liveData.sources.weather || liveContextState.weather;
+        liveContextState.horoscope = payload.liveData.sources.horoscope || liveContextState.horoscope;
+        liveContextState.purpleStar = payload.liveData.sources.purpleStar || liveContextState.purpleStar;
+        renderWeatherCard();
+        renderAstrologyAndProfileForms();
+      }
+      if (payload?.reading) {
+        reading = { ...payload.reading, aiGenerated: Boolean(payload.aiGenerated) };
+      }
+    }
+  } catch {
+    // Fallback to local reading below if serverless call is unreachable
+  } finally {
+    if (affirmBtn) affirmBtn.disabled = false;
+    if (inspireBtn) inspireBtn.disabled = false;
+  }
+
+  if (!reading) {
+    reading = buildLocalOracleReading(mode, feelingText, targetDate);
+  }
+
   appState.coins -= cost;
   appState.ledger.unshift({
     id: `spend-${Date.now()}`,
@@ -1081,13 +1269,7 @@ function runOracleReading(mode) {
     delta: -cost,
   });
 
-  const targetDate =
-    mode === "inspire"
-      ? getTodayDateString()
-      : targetDateInput && targetDateInput.value
-        ? targetDateInput.value
-        : getTodayDateString();
-  appState.lastReading = buildLocalOracleReading(mode, feelingText, targetDate);
+  appState.lastReading = reading;
 
   saveState();
   renderTimeOfDayLabel();
@@ -1099,7 +1281,6 @@ function runOracleReading(mode) {
       : "Fresh Top 3 inspiration ready! (-2 Coins)"
   );
 
-  const resultsSection = document.getElementById("results-section");
   if (resultsSection) {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     resultsSection.scrollIntoView({
@@ -1375,7 +1556,8 @@ function wireAllEventListeners() {
       appState.user.birthPlace = placeVal;
       saveState();
       renderAstrologyAndProfileForms();
-      showStatusBanner("Astrology chart applied! Your Affirm and Inspire Me results are now personalised.");
+      void fetchLiveOracleContext();
+      showStatusBanner("Astrology chart applied! Live horoscope & Zi Wei Dou Shu chart updated.");
     });
   }
 
@@ -1407,6 +1589,7 @@ function wireAllEventListeners() {
       saveState();
       renderHeaderAndWallet();
       renderAstrologyAndProfileForms();
+      void fetchLiveOracleContext();
       showStatusBanner("Profile & astrology preferences saved!");
     });
   }
@@ -1677,6 +1860,7 @@ function initApp() {
   renderTopUpControls();
   renderResultsSection();
   renderTrackerList();
+  void fetchLiveOracleContext();
 }
 
 if (document.readyState === "loading") {

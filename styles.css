@@ -1,36 +1,40 @@
 /* ==========================================================================
-   My Oracle — Design System & Responsive Stylesheet
+   My Oracle — Dark Cosmic Starry Design System & Responsive Stylesheet
    Mobile-first CSS Grid + Flexbox, Material elevation, WCAG 2.1 AA contrast
    Breakpoints: 768px (tablet) and 1024px (desktop)
    ========================================================================== */
 
 :root {
-  /* 60% Neutral Canvas */
-  --bg-canvas: #ffffff;
-  --bg-surface: #f6f5fa;
-  --bg-elevated: #ffffff;
-  --border-hairline: #e2dfee;
-  --border-strong: #c8c2dc;
+  color-scheme: dark;
 
-  /* Ink & Contrast (All > 4.5:1 against white & surface) */
-  --ink-primary: #16141f;
-  --ink-secondary: #524e63;
+  /* 60% Deep Night-Sky Canvas & Cosmic Surfaces */
+  --bg-canvas: #080714;
+  --bg-surface: rgba(20, 17, 40, 0.84);
+  --bg-elevated: rgba(16, 14, 34, 0.9);
+  --bg-input: #0e0c1e;
+  --border-hairline: rgba(196, 181, 253, 0.16);
+  --border-strong: rgba(196, 181, 253, 0.34);
+
+  /* Ink & Contrast (All > 4.5:1 against dark surfaces) */
+  --ink-primary: #f5f3ff;
+  --ink-secondary: #c4bfe0;
   --ink-on-accent: #ffffff;
 
   /* 10% Bold Pop of Color (Gen Z Playful Oracle) */
-  --accent-violet: #581ce0;
-  --accent-violet-hover: #4714b8;
-  --accent-violet-soft: #efeafd;
+  --accent-violet: #6d28d9;
+  --accent-violet-hover: #5b21b6;
+  --accent-violet-soft: rgba(124, 58, 237, 0.22);
+  --accent-violet-text: #d8b4fe;
 
   --accent-marigold: #fde047;
   --accent-marigold-hover: #facc15;
   --accent-mint: #0f766e;
   --accent-mint-hover: #0d625b;
-  --accent-mint-soft: #e6f6f4;
+  --accent-mint-text: #5eead4;
 
-  --danger-ink: #b91c1c;
-  --danger-bg: #fef2f2;
-  --danger-border: #fecaca;
+  --danger-ink: #fecaca;
+  --danger-bg: rgba(185, 28, 28, 0.24);
+  --danger-border: rgba(248, 113, 113, 0.5);
 
   /* Typography */
   --font-display: "Bricolage Grotesque", system-ui, -apple-system, sans-serif;
@@ -41,8 +45,8 @@
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 22px;
-  --shadow-card: 0 2px 10px rgba(22, 20, 31, 0.04);
-  --shadow-modal: 0 20px 48px rgba(22, 20, 31, 0.16);
+  --shadow-card: 0 10px 30px rgba(3, 2, 10, 0.45);
+  --shadow-modal: 0 24px 56px rgba(2, 1, 8, 0.72);
 
   /* Motion */
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
@@ -58,11 +62,17 @@
 html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
+  background-color: var(--bg-canvas);
 }
 
 body {
   margin: 0;
+  position: relative;
   background-color: var(--bg-canvas);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 18% 0%, rgba(109, 40, 217, 0.28), transparent 65%),
+    radial-gradient(ellipse 70% 45% at 88% 12%, rgba(20, 184, 166, 0.14), transparent 60%),
+    radial-gradient(ellipse 65% 55% at 50% 100%, rgba(91, 33, 182, 0.22), transparent 65%);
   color: var(--ink-primary);
   font-family: var(--font-body);
   font-size: 1rem;
@@ -71,6 +81,58 @@ body {
   display: flex;
   flex-direction: column;
   padding-bottom: 68px; /* Leaves room for mobile bottom navigation */
+  overflow-x: hidden;
+}
+
+/* Layered Starfield Backdrop (Decorative, non-interactive) */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Layer 1: Fine distant stars */
+body::before {
+  background-image:
+    radial-gradient(1px 1px at 24px 36px, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1px 1px at 94px 118px, rgba(221, 214, 254, 0.75), transparent),
+    radial-gradient(1.5px 1.5px at 142px 52px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 188px 164px, rgba(253, 224, 71, 0.7), transparent),
+    radial-gradient(1px 1px at 64px 210px, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(1.5px 1.5px at 228px 92px, rgba(167, 243, 208, 0.7), transparent);
+  background-size: 260px 240px;
+  opacity: 0.75;
+}
+
+/* Layer 2: Brighter twinkling hero stars */
+body::after {
+  background-image:
+    radial-gradient(2px 2px at 48px 84px, rgba(255, 255, 255, 0.95), transparent),
+    radial-gradient(2px 2px at 165px 28px, rgba(253, 224, 71, 0.9), transparent),
+    radial-gradient(2.5px 2.5px at 290px 150px, rgba(216, 180, 254, 0.95), transparent),
+    radial-gradient(2px 2px at 360px 64px, rgba(255, 255, 255, 0.88), transparent),
+    radial-gradient(1.5px 1.5px at 120px 260px, rgba(94, 234, 212, 0.8), transparent);
+  background-size: 400px 320px;
+  animation: starTwinkle 6s ease-in-out infinite alternate;
+}
+
+@keyframes starTwinkle {
+  0% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0.95;
+  }
+}
+
+.site-header,
+.app-main,
+.site-footer {
+  position: relative;
+  z-index: 1;
 }
 
 h1,
@@ -105,11 +167,11 @@ textarea {
   left: 16px;
   top: -100px;
   z-index: 100;
-  background: var(--accent-violet);
-  color: var(--ink-on-accent);
+  background: var(--accent-marigold);
+  color: #0e0c1e;
   padding: 12px 18px;
   border-radius: var(--radius-sm);
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
 }
 
@@ -117,9 +179,9 @@ textarea {
   top: 16px;
 }
 
-/* WCAG 2.1 AA Focus Ring */
+/* WCAG 2.1 AA Focus Ring (High contrast on dark surfaces) */
 :focus-visible {
-  outline: 3px solid var(--accent-violet);
+  outline: 3px solid var(--accent-marigold);
   outline-offset: 2px;
 }
 
@@ -131,8 +193,8 @@ textarea {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(12px);
+  background: rgba(10, 9, 24, 0.82);
+  backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-hairline);
 }
 
@@ -163,7 +225,7 @@ textarea {
 }
 
 .brand-emblem {
-  color: var(--accent-violet);
+  color: var(--accent-marigold);
   flex-shrink: 0;
 }
 
@@ -193,7 +255,7 @@ textarea {
 }
 
 .nav-link.is-active {
-  color: var(--accent-violet);
+  color: var(--accent-marigold);
 }
 
 .nav-link.is-active::after {
@@ -203,7 +265,7 @@ textarea {
   right: 0;
   bottom: 4px;
   height: 2px;
-  background: var(--accent-violet);
+  background: var(--accent-marigold);
   border-radius: 2px;
 }
 
@@ -241,7 +303,8 @@ textarea {
   gap: 12px;
   padding: 12px 16px;
   margin-bottom: 20px;
-  background: var(--accent-violet-soft);
+  background: rgba(109, 40, 217, 0.28);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   color: var(--ink-primary);
@@ -250,8 +313,9 @@ textarea {
 }
 
 .status-dismiss {
-  background: var(--bg-canvas);
-  border: 1px solid var(--border-hairline);
+  background: rgba(14, 12, 30, 0.85);
+  color: var(--ink-primary);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   padding: 6px 12px;
   min-height: 36px;
@@ -287,7 +351,7 @@ textarea {
   gap: 8px;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--ink-secondary);
+  color: var(--accent-violet-text);
 }
 
 .hero-weather-inline {
@@ -321,9 +385,11 @@ textarea {
 /* Weather & Wallet Card */
 .context-card {
   background: var(--bg-surface);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-lg);
   padding: 20px;
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -375,7 +441,7 @@ textarea {
 .weather-condition {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--accent-mint);
+  color: var(--accent-mint-text);
 }
 
 .weather-controls {
@@ -425,7 +491,7 @@ textarea {
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--ink-primary);
+  color: var(--accent-marigold);
 }
 
 .wallet-unit {
@@ -455,6 +521,7 @@ textarea {
 
 .surface-card {
   background: var(--bg-elevated);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -521,7 +588,7 @@ textarea {
   width: 100%;
   min-height: 44px;
   padding: 10px 14px;
-  background: var(--bg-canvas);
+  background: var(--bg-input);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   color: var(--ink-primary);
@@ -529,12 +596,16 @@ textarea {
   transition: border-color var(--dur-fast) var(--ease-settle);
 }
 
+.field-control::placeholder {
+  color: #8f89b0;
+}
+
 .field-control:hover {
-  border-color: var(--ink-primary);
+  border-color: var(--accent-violet-text);
 }
 
 .field-control:focus {
-  border-color: var(--accent-violet);
+  border-color: var(--accent-marigold);
 }
 
 .field-textarea {
@@ -575,7 +646,7 @@ textarea {
 .prompt-btn {
   min-height: 40px;
   padding: 8px 14px;
-  background: var(--bg-surface);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
   color: var(--ink-primary);
@@ -589,7 +660,7 @@ textarea {
 
 .prompt-btn:hover {
   background: var(--accent-violet-soft);
-  border-color: var(--accent-violet);
+  border-color: var(--accent-violet-text);
 }
 
 /* ==========================================================================
@@ -644,6 +715,7 @@ textarea {
 .btn-primary {
   background: var(--accent-violet);
   color: var(--ink-on-accent);
+  border-color: rgba(216, 180, 254, 0.35);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -652,7 +724,7 @@ textarea {
 
 .btn-marigold {
   background: var(--accent-marigold);
-  color: var(--ink-primary);
+  color: #121023;
   border-color: #eab308;
 }
 
@@ -670,14 +742,14 @@ textarea {
 }
 
 .btn-secondary {
-  background: var(--bg-canvas);
+  background: rgba(28, 24, 54, 0.9);
   color: var(--ink-primary);
   border-color: var(--border-strong);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--bg-surface);
-  border-color: var(--ink-primary);
+  background: rgba(44, 38, 82, 0.95);
+  border-color: var(--accent-violet-text);
 }
 
 .link-action {
@@ -685,7 +757,7 @@ textarea {
   border: 0;
   padding: 6px 2px;
   min-height: 40px;
-  color: var(--accent-violet);
+  color: var(--accent-violet-text);
   font-weight: 600;
   font-size: 0.875rem;
   text-decoration: underline;
@@ -815,6 +887,23 @@ textarea {
   text-align: right;
 }
 
+.weather-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chart-horoscope-note {
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+}
+
 /* ==========================================================================
    Top 3 Auspicious Activities Results
    ========================================================================== */
@@ -852,9 +941,14 @@ textarea {
   color: var(--ink-secondary);
 }
 
+.results-luck-info strong {
+  color: var(--accent-marigold);
+}
+
 .empty-state-box,
 .loading-box {
   background: var(--bg-surface);
+  backdrop-filter: blur(12px);
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-lg);
   padding: 32px 20px;
@@ -865,6 +959,7 @@ textarea {
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
+  color: var(--ink-primary);
   margin-bottom: 6px;
 }
 
@@ -883,6 +978,7 @@ textarea {
 
 .activity-card {
   background: var(--bg-elevated);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -911,7 +1007,7 @@ textarea {
 .activity-index {
   font-family: var(--font-mono);
   font-weight: 500;
-  color: var(--accent-violet);
+  color: var(--accent-marigold);
 }
 
 .activity-title {
@@ -988,9 +1084,10 @@ textarea {
   gap: 10px;
   min-height: 44px;
   padding: 8px 12px;
-  background: var(--bg-surface);
+  background: var(--bg-input);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
+  color: var(--ink-primary);
   cursor: pointer;
   font-size: 0.9375rem;
   font-weight: 500;
@@ -999,7 +1096,7 @@ textarea {
 .checkbox-item input[type="checkbox"] {
   width: 20px;
   height: 20px;
-  accent-color: var(--accent-violet);
+  accent-color: var(--accent-marigold);
 }
 
 .form-actions-row {
@@ -1014,7 +1111,7 @@ textarea {
   justify-content: space-between;
   gap: 12px;
   padding: 16px;
-  background: var(--bg-surface);
+  background: var(--bg-input);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
 }
@@ -1030,12 +1127,14 @@ textarea {
   font-size: 2.25rem;
   font-weight: 800;
   line-height: 1;
+  color: var(--accent-marigold);
 }
 
 .subhead {
   font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 700;
+  color: var(--ink-primary);
   margin-bottom: 10px;
 }
 
@@ -1070,7 +1169,7 @@ textarea {
 .ledger-delta-plus {
   font-family: var(--font-mono);
   font-weight: 500;
-  color: var(--accent-mint);
+  color: var(--accent-mint-text);
 }
 
 .ledger-delta-minus {
@@ -1090,9 +1189,10 @@ textarea {
   width: 100%;
   min-height: 68px;
   padding: 14px 16px;
-  background: var(--bg-canvas);
+  background: var(--bg-input);
   border: 2px solid var(--border-hairline);
   border-radius: var(--radius-md);
+  color: var(--ink-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1109,7 +1209,7 @@ textarea {
 
 .bundle-option.is-selected {
   background: var(--accent-violet-soft);
-  border-color: var(--accent-violet);
+  border-color: var(--accent-marigold);
 }
 
 .bundle-main {
@@ -1133,7 +1233,7 @@ textarea {
   font-family: var(--font-display);
   font-size: 1.125rem;
   font-weight: 800;
-  color: var(--ink-primary);
+  color: var(--accent-marigold);
   white-space: nowrap;
 }
 
@@ -1142,7 +1242,7 @@ textarea {
 .filter-tabs {
   display: inline-flex;
   padding: 4px;
-  background: var(--bg-surface);
+  background: var(--bg-input);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
   gap: 4px;
@@ -1164,14 +1264,14 @@ textarea {
 
 .payment-tab.is-active,
 .filter-tab.is-active {
-  background: var(--bg-canvas);
-  color: var(--ink-primary);
-  box-shadow: 0 1px 3px rgba(22, 20, 31, 0.08);
+  background: var(--accent-violet);
+  color: var(--ink-on-accent);
 }
 
 .payment-note {
   padding: 16px;
-  background: var(--bg-surface);
+  background: var(--bg-input);
+  border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
   color: var(--ink-secondary);
   font-size: 0.9375rem;
@@ -1182,13 +1282,15 @@ textarea {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: var(--bg-surface);
+  background: var(--bg-input);
+  border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
 }
 
 .summary-total {
   font-family: var(--font-display);
   font-size: 1.25rem;
+  color: var(--accent-marigold);
 }
 
 /* ==========================================================================
@@ -1212,6 +1314,7 @@ textarea {
 
 .tracker-card {
   background: var(--bg-elevated);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -1232,11 +1335,11 @@ textarea {
 .tracker-status-label {
   font-size: 0.875rem;
   font-weight: 700;
-  color: var(--accent-mint);
+  color: var(--accent-mint-text);
 }
 
 .tracker-status-label.is-planned {
-  color: var(--accent-violet);
+  color: var(--accent-marigold);
 }
 
 .tracker-note-form {
@@ -1258,7 +1361,7 @@ textarea {
 .site-footer {
   border-top: 1px solid var(--border-hairline);
   padding: 20px 16px;
-  background: var(--bg-canvas);
+  background: rgba(8, 7, 20, 0.85);
 }
 
 .footer-inner {
@@ -1288,11 +1391,11 @@ textarea {
   right: 0;
   z-index: 45;
   height: 60px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(12px);
+  background: rgba(10, 9, 24, 0.94);
+  backdrop-filter: blur(14px);
   border-top: 1px solid var(--border-hairline);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   align-items: center;
 }
 
@@ -1312,7 +1415,7 @@ textarea {
 }
 
 .mobile-tab.is-active {
-  color: var(--accent-violet);
+  color: var(--accent-marigold);
 }
 
 /* ==========================================================================
@@ -1323,8 +1426,8 @@ textarea {
   position: fixed;
   inset: 0;
   z-index: 80;
-  background: rgba(22, 20, 31, 0.56);
-  backdrop-filter: blur(4px);
+  background: rgba(4, 3, 12, 0.74);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1334,8 +1437,8 @@ textarea {
 .modal-dialog {
   width: 100%;
   max-width: 440px;
-  background: var(--bg-canvas);
-  border: 1px solid var(--border-hairline);
+  background: #131027;
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   padding: 24px;
   box-shadow: var(--shadow-modal);
@@ -1355,8 +1458,9 @@ textarea {
   min-height: 44px;
   min-width: 64px;
   padding: 8px 14px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-hairline);
+  background: var(--bg-input);
+  color: var(--ink-primary);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   font-weight: 600;
   cursor: pointer;
