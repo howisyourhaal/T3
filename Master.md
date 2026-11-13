@@ -10,14 +10,17 @@ to WCAG 2.1 AA.
 
 Build an app that tells me the top 3 auspicious activities I should do today based on today's weather, my horoscope (western and Chinese) and what I'm feeling today.
 
-The feature
+The feature in detail.
 
 1. Seek Affirmation feature. An input text format window to describe what he/she feels like doing today. Click 'affirm' to get a reading result.
-3. Inspire me feature. A button that generates 3 top auspicious activity to do today. 
-4. Personalisation with Astrology: An input window for user to key in their birthday day and time and location of birth. The user would be able to personalise their results in feature 1 and 2 upon providing this information. 
-5. Now weather report based on specific user location 
+2. Inspire me feature. A button that generates 3 top auspicious activity to do today. 
+3. Personalisation with Astrology: An input window for user to key in their birthday day and time and location of birth. The user would be able to personalise their results in feature 1 and 2 upon providing this information. 
+4. Now weather report based on specific user location
+5. Login feature, user can sign up or login to their account.
+6. In the account feature, there is a wallet storing coins. The coins can be collected via daily check in, acceptance of the proposed activity and  mobile credit card payment. Users will use coins to generate a reading in feature 1 and 2.
 
-The website look and feel should have a gen z vibe. Primarily white background with a pop of color. San serif font.
+The website look and feel should have a gen z playful, oracle vibe. Primarily white background with a pop of color. The interface is simple and bold.
+
 Build the front end interface only. I will create the backend later.
 
 # ---- O : OUTPUT ----------------------------
