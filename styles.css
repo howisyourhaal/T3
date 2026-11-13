@@ -700,6 +700,23 @@ textarea {
   text-align: right;
 }
 
+.weather-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chart-horoscope-note {
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+}
+
 /* ==========================================================================
    Top 3 Auspicious Activities Results
    ========================================================================== */

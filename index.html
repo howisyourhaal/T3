@@ -138,10 +138,15 @@
                 </div>
 
                 <div class="weather-meta-footer">
-                  <span id="weather-advice-text">Great for breezy walks before 4 PM; carry a compact umbrella.</span>
-                  <button type="button" class="link-action" id="cycle-weather-btn">
-                    Switch weather preview
-                  </button>
+                  <span id="weather-advice-text">Loading live Singapore 24-hour forecast…</span>
+                  <div class="weather-footer-actions">
+                    <button type="button" class="link-action" id="refresh-weather-btn">
+                      Live weather
+                    </button>
+                    <button type="button" class="link-action" id="cycle-weather-btn">
+                      Switch weather preview
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -289,7 +294,6 @@
 
             <div class="divider-line" aria-hidden="true"></div>
 
-            <!-- Live Derived Chart Readout (Never repeats raw DOB back) -->
             <div class="chart-readout" aria-live="polite">
               <div class="chart-row">
                 <span class="chart-label">Western Sun Sign</span>
@@ -303,6 +307,13 @@
                 <span class="chart-label">Zi Wei Palace Focus</span>
                 <strong class="chart-value" id="chart-ziwei-palace">General Fortune</strong>
               </div>
+              <div class="chart-row">
+                <span class="chart-label">Zi Wei Main Star</span>
+                <strong class="chart-value" id="chart-purple-star">Loading chart…</strong>
+              </div>
+              <p class="chart-horoscope-note" id="chart-horoscope-snippet">
+                Loading today's live horoscope…
+              </p>
             </div>
           </section>
         </div>
@@ -341,7 +352,7 @@
 
           <!-- Ethical Guardrail #6: AI-Generated Output Disclosure -->
           <p id="ai-disclosure" class="ai-disclosure is-hidden">
-            AI-generated front-end preview for daily inspiration and entertainment. Connect your backend API later for live horoscope &amp; almanac feeds.
+            Generated for daily inspiration and entertainment using live Singapore 24-hour weather, daily horoscope, and Zi Wei Dou Shu chart feeds.
           </p>
         </section>
       </section>
