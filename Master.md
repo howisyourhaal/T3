@@ -16,12 +16,9 @@ The feature
 3. Inspire me feature. A button that generates 3 top auspicious activity to do today. 
 4. Personalisation with Astrology: An input window for user to key in their birthday day and time and location of birth. The user would be able to personalise their results in feature 1 and 2 upon providing this information. 
 5. Now weather report based on specific user location 
-  
-6. Sortable, filterable transaction table
 
-7. An "Explain this trend" panel that
-   POSTs to /api/insight, which calls
-   Gemini server-side
+The website look and feel should have a gen z vibe. Primarily white background with a pop of color. San serif font.
+Build the front end interface only. I will create the backend later.
 
 # ---- O : OUTPUT ----------------------------
 
