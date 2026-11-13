@@ -86,169 +86,144 @@
       <!-- VIEW 1: TODAY (MAIN ORACLE PAGE)                      -->
       <!-- ===================================================== -->
       <section id="view-today" class="view-section is-active" aria-labelledby="today-heading">
-        <!-- Hero + Live Context Strip -->
+        <!-- Hero + Live Date & Weather Strip -->
         <div class="hero-grid">
           <div class="hero-copy">
             <p class="eyebrow-meta" id="hero-meta-line">
-              <span id="hero-date-text">Today</span>
+              <span id="hero-date-text">Today · Singapore</span>
               <span aria-hidden="true">·</span>
-              <span id="hero-astro-summary">Set your birthday to unlock your chart</span>
+              <span class="hero-weather-inline" id="hero-weather-summary">
+                <strong class="hero-weather-temp tabular-nums" id="weather-temp-display">31°C</strong>
+                <span class="weather-condition" id="weather-condition-display">Partly Cloudy · Breezy</span>
+              </span>
             </p>
             <h1 id="today-heading" class="hero-title">
               What is the auspicious move today?
             </h1>
             <p class="hero-subtitle">
-              Blend Singapore weather, Western &amp; Chinese astrology (Zi Wei Dou Shu), and how you feel into three clear ideas for your day.
+              Blend Singapore weather, Western &amp; Chinese Astrology (Zi Wei Dou Shu), to inspire or affirm activities for your day. Set your Birthday to personalise your chart.
             </p>
           </div>
-
-          <!-- Weather & Wallet Context Card -->
-          <aside class="context-card" aria-label="Current weather and coin wallet">
-            <div class="context-weather-row">
-              <div class="weather-header">
-                <div class="weather-title-group">
-                  <span class="weather-label">Now Weather</span>
-                  <strong class="weather-temp tabular-nums" id="weather-temp-display">31°C</strong>
-                </div>
-                <span class="weather-condition" id="weather-condition-display">Partly Cloudy · Breezy</span>
-              </div>
-
-              <div class="weather-controls">
-                <div class="field-group">
-                  <label for="location-select" class="field-label">Your location</label>
-                  <select id="location-select" class="field-control">
-                    <option value="central">Singapore · Central (Orchard / Bugis)</option>
-                    <option value="east">Singapore · East (Tampines / Katong)</option>
-                    <option value="west">Singapore · West (Jurong / Clementi)</option>
-                    <option value="north">Singapore · North (Woodlands / Yishun)</option>
-                    <option value="south">Singapore · South (Tiong Bahru / Sentosa)</option>
-                    <option value="custom">Custom location…</option>
-                  </select>
-                </div>
-
-                <div class="field-group is-hidden" id="custom-location-wrap">
-                  <label for="custom-location-input" class="field-label">Enter city or neighbourhood</label>
-                  <input
-                    id="custom-location-input"
-                    type="text"
-                    class="field-control"
-                    maxlength="60"
-                    placeholder="e.g., Holland Village, Singapore"
-                  />
-                </div>
-
-                <div class="weather-meta-footer">
-                  <span id="weather-advice-text">Great for breezy walks before 4 PM; carry a compact umbrella.</span>
-                  <button type="button" class="link-action" id="cycle-weather-btn">
-                    Switch weather preview
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="divider-line" aria-hidden="true"></div>
-
-            <div class="context-wallet-row">
-              <div class="wallet-balance-block">
-                <span class="wallet-label">Oracle Wallet</span>
-                <div class="wallet-value-line">
-                  <strong class="wallet-coins tabular-nums" id="today-coin-balance">12</strong>
-                  <span class="wallet-unit">Coins</span>
-                </div>
-              </div>
-              <div class="wallet-actions">
-                <button type="button" class="btn btn-mint btn-sm" id="daily-checkin-btn">
-                  Daily Check-In (+5)
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" data-nav-target="topup">
-                  Top Up
-                </button>
-              </div>
-            </div>
-          </aside>
         </div>
 
-        <!-- Core Interactive Workspace: Seek Affirmation / Inspire Me + Astrology Personalisation -->
-        <div class="workspace-grid">
+        <!-- Core Interactive Workspace: Ask Your Oracle + Collapsible Astrology Personalisation -->
+        <div class="workspace-grid" id="workspace-grid">
           <!-- Feature 1 & 2: Seek Affirmation & Inspire Me -->
           <section class="surface-card oracle-engine-card" aria-labelledby="engine-heading">
             <div class="card-head">
               <div>
                 <h2 id="engine-heading" class="card-title">Ask Your Oracle</h2>
                 <p class="card-desc">
-                  Share what you feel like doing today for an affirmation, or let the stars inspire you.
+                  Choose <strong>Inspire Me</strong> for today's time-aware ideas, or <strong>Affirm</strong> to check if today or any particular day is best for your plan.
                 </p>
               </div>
             </div>
 
             <form id="affirm-form" class="oracle-form" novalidate>
-              <div class="field-group">
-                <label for="feeling-input" class="field-label">
-                  What do you feel like doing today?
-                </label>
-                <textarea
-                  id="feeling-input"
-                  class="field-control field-textarea"
-                  rows="3"
-                  maxlength="240"
-                  placeholder="e.g., Catch up with a friend in Tiong Bahru, ask my boss for flexible hours, or sign a lease…"
-                  aria-describedby="feeling-hint feeling-error"
-                ></textarea>
-                <div class="field-footer">
-                  <span id="feeling-hint" class="field-hint">
-                    Plain English works best. Avoid typing full IC numbers or private addresses.
+              <!-- Personalisation Prompt Bar -->
+              <div class="personalise-prompt-bar" id="personalise-prompt-bar">
+                <div class="personalise-prompt-copy">
+                  <strong class="personalise-prompt-title" id="personalise-prompt-title">
+                    For best &amp; tailored results, personalise with your birthday
+                  </strong>
+                  <span class="personalise-prompt-desc" id="personalise-prompt-desc">
+                    Unlock Western Zodiac &amp; Chinese Zi Wei Dou Shu insights before you ask.
                   </span>
-                  <span id="feeling-char-count" class="field-hint tabular-nums">0/240</span>
                 </div>
-                <p id="feeling-error" class="field-error is-hidden" role="alert"></p>
-              </div>
-
-              <!-- Quick Prompt Suggestions -->
-              <div class="prompt-suggestions" aria-label="Quick mood ideas">
-                <button type="button" class="prompt-btn" data-prompt="Ask for a raise or pitch a work idea today">
-                  Pitch a work idea
-                </button>
-                <button type="button" class="prompt-btn" data-prompt="Solo matcha cafe date and journaling">
-                  Solo cafe &amp; journal
-                </button>
-                <button type="button" class="prompt-btn" data-prompt="Sign a new contract or make a big purchase">
-                  Sign a contract
-                </button>
-                <button type="button" class="prompt-btn" data-prompt="Declutter my room and reset my sleep schedule">
-                  Home reset
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  id="toggle-astro-btn"
+                  aria-expanded="false"
+                  aria-controls="astrology-card"
+                >
+                  Personalise with Birthday
                 </button>
               </div>
 
-              <div class="form-split-row">
+              <!-- Path 1: Inspire Me (Today, time-of-day aware) -->
+              <div class="oracle-path-box">
+                <div class="oracle-path-row">
+                  <div class="oracle-path-copy">
+                    <h3 class="oracle-path-title">No idea what to do today?</h3>
+                    <p class="oracle-path-desc">
+                      Get 3 auspicious ideas for today based on Singapore weather and the time of day (<strong id="time-of-day-label" class="tabular-nums">Now</strong>).
+                    </p>
+                  </div>
+                  <button type="button" class="btn btn-marigold btn-lg" id="inspire-btn">
+                    Inspire Me (2 Coins)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Path 2: Affirm (Check if today or any particular day is best) -->
+              <div class="oracle-path-box">
+                <div class="oracle-path-copy">
+                  <h3 class="oracle-path-title">Have something you wish to do?</h3>
+                  <p class="oracle-path-desc">
+                    Share what you have in mind and choose today or any particular day to see if it is the best day to go ahead.
+                  </p>
+                </div>
+
                 <div class="field-group">
-                  <label for="reading-date-input" class="field-label">Target day</label>
-                  <input id="reading-date-input" type="date" class="field-control" />
+                  <label for="feeling-input" class="field-label">
+                    What do you wish to do?
+                  </label>
+                  <textarea
+                    id="feeling-input"
+                    class="field-control field-textarea"
+                    rows="3"
+                    maxlength="240"
+                    placeholder="e.g., Pitch a work idea, ask for flexible hours, sign a lease, or confess to someone…"
+                    aria-describedby="feeling-hint feeling-error"
+                  ></textarea>
+                  <div class="field-footer">
+                    <span id="feeling-hint" class="field-hint">
+                      Plain English works best. Avoid typing full IC numbers or private addresses.
+                    </span>
+                    <span id="feeling-char-count" class="field-hint tabular-nums">0/240</span>
+                  </div>
+                  <p id="feeling-error" class="field-error is-hidden" role="alert"></p>
                 </div>
 
-                <div class="field-group">
-                  <label for="segment-select" class="field-label">Life stage focus</label>
-                  <select id="segment-select" class="field-control">
-                    <option value="adult">Working Professional (Career, Wellness, Social)</option>
-                    <option value="teen">Student / Teen (Study, Hangouts, Creative)</option>
-                    <option value="elderly">Retiree / Elderly (Culture, Light Exercise, Family)</option>
-                  </select>
+                <div class="oracle-affirm-footer">
+                  <div class="field-group">
+                    <label for="reading-date-input" class="field-label">Check which day? (Today or any date)</label>
+                    <input id="reading-date-input" type="date" class="field-control" />
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-lg" id="affirm-submit-btn">
+                    Affirm (1 Coin)
+                  </button>
                 </div>
               </div>
 
-              <!-- Primary Action Row: Affirm vs Inspire Me -->
-              <div class="oracle-cta-row">
-                <button type="submit" class="btn btn-primary btn-lg" id="affirm-submit-btn">
-                  Affirm (1 Coin)
-                </button>
-                <button type="button" class="btn btn-marigold btn-lg" id="inspire-btn">
-                  Inspire Me (2 Coins)
+              <!-- Insufficient Coins Top Up Prompt (Shown when Affirm or Inspire Me lacks coins) -->
+              <div
+                id="insufficient-coins-bar"
+                class="insufficient-coins-bar is-hidden"
+                role="alert"
+              >
+                <span id="insufficient-coins-text">
+                  You don't have enough coins for this reading.
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  id="insufficient-topup-btn"
+                  data-nav-target="topup"
+                >
+                  Top Up
                 </button>
               </div>
             </form>
           </section>
 
-          <!-- Feature 3: Personalisation with Astrology -->
-          <section class="surface-card astrology-card" aria-labelledby="astro-heading">
+          <!-- Feature 3: Personalisation with Astrology (Opens on prompt click) -->
+          <section
+            id="astrology-card"
+            class="surface-card astrology-card is-hidden"
+            aria-labelledby="astro-heading"
+          >
             <div class="card-head">
               <div>
                 <h2 id="astro-heading" class="card-title">Personalise with Astrology</h2>
@@ -256,6 +231,14 @@
                   Add your birth details to tailor readings with Western Zodiac &amp; Chinese Zi Wei Dou Shu.
                 </p>
               </div>
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                id="close-astro-btn"
+                aria-label="Close Personalise with Astrology"
+              >
+                Close
+              </button>
             </div>
 
             <form id="quick-astro-form" class="astro-form" novalidate>
@@ -307,8 +290,13 @@
           </section>
         </div>
 
-        <!-- Top 3 Auspicious Activities Results Panel -->
-        <section class="results-section" aria-labelledby="results-heading" aria-live="polite">
+        <!-- Top 3 Auspicious Activities Results Panel (Shown after clicking Affirm or Inspire Me) -->
+        <section
+          id="results-section"
+          class="results-section is-hidden"
+          aria-labelledby="results-heading"
+          aria-live="polite"
+        >
           <div class="results-header">
             <div>
               <h2 id="results-heading" class="section-title">Your Top 3 Auspicious Activities</h2>
@@ -324,7 +312,7 @@
           </div>
 
           <!-- Empty State -->
-          <div id="results-empty" class="empty-state-box">
+          <div id="results-empty" class="empty-state-box is-hidden">
             <h3 class="empty-title">Ready when you are</h3>
             <p class="empty-copy">
               Type something you have on your mind and click <strong>Affirm (1 Coin)</strong>, or tap <strong>Inspire Me (2 Coins)</strong> for a fresh Singapore-ready trio.

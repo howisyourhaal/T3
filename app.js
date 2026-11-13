@@ -103,6 +103,7 @@ function loadInitialState() {
     return {
       ...fallback,
       ...parsed,
+      lastReading: null,
       user: { ...fallback.user, ...(parsed.user || {}) },
     };
   } catch {
@@ -112,6 +113,7 @@ function loadInitialState() {
 
 let appState = loadInitialState();
 let lastFocusedElement = null;
+let isAstroPanelOpen = false;
 
 /**
  * Saves the current appState object into the browser's localStorage so refreshes
@@ -134,6 +136,78 @@ function getTodayDateString() {
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+/**
+ * Formats a YYYY-MM-DD date string into a friendly Singapore-style label
+ * such as "Fri, 13 Nov 2026".
+ */
+function formatReadableDate(dateString) {
+  if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return "Today";
+  }
+  const [y, m, d] = dateString.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.toLocaleDateString("en-SG", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/**
+ * Reads the current local time of day so "Inspire Me" recommends activities
+ * and time windows that make sense from right now onward.
+ */
+function getTimeOfDayContext() {
+  const now = new Date();
+  const hour = now.getHours();
+  const formattedTime = now.toLocaleTimeString("en-SG", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  if (hour >= 5 && hour < 12) {
+    return {
+      period: "morning",
+      label: "Morning",
+      formattedTime,
+      windows: ["09:30 – 11:30", "11:30 – 13:30", "15:00 – 17:00"],
+    };
+  }
+  if (hour >= 12 && hour < 17) {
+    return {
+      period: "afternoon",
+      label: "Afternoon",
+      formattedTime,
+      windows: ["14:00 – 16:00", "16:30 – 18:30", "19:00 – 20:30"],
+    };
+  }
+  if (hour >= 17 && hour < 21) {
+    return {
+      period: "evening",
+      label: "Evening",
+      formattedTime,
+      windows: ["18:30 – 20:00", "20:00 – 21:15", "21:15 – 22:15"],
+    };
+  }
+  return {
+    period: "night",
+    label: "Late Night",
+    formattedTime,
+    windows: ["21:30 – 22:30", "22:30 – 23:15", "Tomorrow 08:30 – 10:00"],
+  };
+}
+
+/**
+ * Updates the visible time-of-day indicator inside the Inspire Me box.
+ */
+function renderTimeOfDayLabel() {
+  const el = document.getElementById("time-of-day-label");
+  if (!el) return;
+  const ctx = getTimeOfDayContext();
+  el.textContent = `${ctx.label} · ${ctx.formattedTime}`;
 }
 
 /**
@@ -290,12 +364,10 @@ function switchView(targetView) {
  */
 function renderHeaderAndWallet() {
   const headerCoin = document.getElementById("header-coin-count");
-  const todayCoin = document.getElementById("today-coin-balance");
   const profileCoin = document.getElementById("profile-coin-balance");
   const authBtn = document.getElementById("header-auth-btn");
 
   if (headerCoin) headerCoin.textContent = String(appState.coins);
-  if (todayCoin) todayCoin.textContent = String(appState.coins);
   if (profileCoin) profileCoin.textContent = String(appState.coins);
 
   if (authBtn) {
@@ -313,12 +385,16 @@ function renderHeaderAndWallet() {
   const todayStr = getTodayDateString();
   const alreadyCheckedIn = appState.lastCheckInDate === todayStr;
 
-  ["daily-checkin-btn", "profile-checkin-btn"].forEach((id) => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    btn.disabled = alreadyCheckedIn;
-    btn.textContent = alreadyCheckedIn ? "Checked In Today" : id === "daily-checkin-btn" ? "Daily Check-In (+5)" : "Claim +5 Coins";
-  });
+  const profileCheckInBtn = document.getElementById("profile-checkin-btn");
+  if (profileCheckInBtn) {
+    profileCheckInBtn.disabled = alreadyCheckedIn;
+    profileCheckInBtn.textContent = alreadyCheckedIn ? "Checked In Today" : "Claim +5 Coins";
+  }
+
+  if (appState.coins >= 2) {
+    const insufficientBar = document.getElementById("insufficient-coins-bar");
+    if (insufficientBar) insufficientBar.classList.add("is-hidden");
+  }
 
   renderLedger();
 }
@@ -363,24 +439,15 @@ function renderLedger() {
 }
 
 /**
- * Updates the Weather card text, location dropdown, and custom location input
- * based on the user's selected Singapore neighbourhood and weather preset.
+ * Updates the inline Singapore weather readout next to the date in the hero.
  */
 function renderWeatherCard() {
   const weather = WEATHER_PRESETS[appState.weatherIndex % WEATHER_PRESETS.length];
   const tempEl = document.getElementById("weather-temp-display");
   const condEl = document.getElementById("weather-condition-display");
-  const adviceEl = document.getElementById("weather-advice-text");
-  const selectEl = document.getElementById("location-select");
-  const customWrap = document.getElementById("custom-location-wrap");
-  const customInput = document.getElementById("custom-location-input");
 
   if (tempEl) tempEl.textContent = `${weather.tempC}°C`;
   if (condEl) condEl.textContent = weather.condition;
-  if (adviceEl) adviceEl.textContent = weather.advice;
-  if (selectEl) selectEl.value = appState.locationKey;
-  if (customWrap) customWrap.classList.toggle("is-hidden", appState.locationKey !== "custom");
-  if (customInput) customInput.value = appState.customLocation;
 }
 
 /**
@@ -392,11 +459,6 @@ function renderAstrologyAndProfileForms() {
   const chinese = getChineseAstrology(appState.user.dob, appState.user.birthTime);
 
   const heroDate = document.getElementById("hero-date-text");
-  const heroAstro = document.getElementById("hero-astro-summary");
-  const locationLabel =
-    appState.locationKey === "custom" && appState.customLocation.trim()
-      ? redactPersonalInfo(appState.customLocation.trim())
-      : LOCATION_LABELS[appState.locationKey] || "Singapore";
 
   if (heroDate) {
     const formatted = new Date().toLocaleDateString("en-SG", {
@@ -404,15 +466,7 @@ function renderAstrologyAndProfileForms() {
       day: "numeric",
       month: "short",
     });
-    heroDate.textContent = `${formatted} · ${locationLabel}`;
-  }
-
-  if (heroAstro) {
-    if (western && chinese) {
-      heroAstro.textContent = `${western.name} · Year of the ${chinese.animal} (${chinese.element})`;
-    } else {
-      heroAstro.textContent = "Set your birthday to personalise your chart";
-    }
+    heroDate.textContent = `${formatted} · Singapore`;
   }
 
   const wEl = document.getElementById("chart-western-sign");
@@ -422,14 +476,35 @@ function renderAstrologyAndProfileForms() {
   if (cEl) cEl.textContent = chinese ? `${chinese.element} ${chinese.animal}` : "Not set yet";
   if (zEl) zEl.textContent = chinese ? chinese.palace : "General Fortune";
 
+  const promptTitle = document.getElementById("personalise-prompt-title");
+  const promptDesc = document.getElementById("personalise-prompt-desc");
+  const toggleAstroBtn = document.getElementById("toggle-astro-btn");
+  const hasChart = Boolean(western && chinese);
+
+  if (promptTitle) {
+    promptTitle.textContent = hasChart
+      ? `Personalised for ${western.name} · ${chinese.element} ${chinese.animal}`
+      : "For best & tailored results, personalise with your birthday";
+  }
+  if (promptDesc) {
+    promptDesc.textContent = hasChart
+      ? `Zi Wei focus: ${chinese.palace}. Tailored results are active for Inspire Me and Affirm.`
+      : "Unlock Western Zodiac & Chinese Zi Wei Dou Shu insights before you ask.";
+  }
+  if (toggleAstroBtn) {
+    toggleAstroBtn.textContent = isAstroPanelOpen
+      ? "Hide Astrology"
+      : hasChart
+        ? "Edit Birthday"
+        : "Personalise with Birthday";
+  }
+
   const quickDob = document.getElementById("quick-dob");
   const quickTime = document.getElementById("quick-birth-time");
   const quickPlace = document.getElementById("quick-birth-place");
-  const segmentSelect = document.getElementById("segment-select");
   if (quickDob) quickDob.value = appState.user.dob;
   if (quickTime) quickTime.value = appState.user.birthTime;
   if (quickPlace) quickPlace.value = appState.user.birthPlace;
-  if (segmentSelect) segmentSelect.value = appState.user.segment;
 
   const pName = document.getElementById("profile-name");
   const pEmail = document.getElementById("profile-email");
@@ -451,9 +526,69 @@ function renderAstrologyAndProfileForms() {
 }
 
 /**
- * Generates three Singapore-tailored auspicious activities locally on the front end
- * using the user's weather preset, Western & Chinese astrology, segment, and mood.
- * Never calls external APIs yet and never repeats raw personal identifiers.
+ * Evaluates whether a chosen calendar date (today or a particular future date)
+ * is the best day to act on a user's wish, or suggests a stronger nearby day.
+ */
+function evaluateDayForWish(wishText, dateStr, western, chinese, weather) {
+  const chosenDate = dateStr || getTodayDateString();
+  const [y, m, d] = chosenDate.split("-").map(Number);
+  const baseDate = new Date(y, m - 1, d);
+  const seedInput = `${chosenDate}|${wishText.toLowerCase()}|${western ? western.name : "guest"}|${chinese ? chinese.animal : "general"}`;
+
+  let hash = 0;
+  for (let i = 0; i < seedInput.length; i += 1) {
+    hash = (hash * 31 + seedInput.charCodeAt(i)) % 997;
+  }
+
+  const tier = hash % 3;
+  const formattedChosen = formatReadableDate(chosenDate);
+  const isToday = chosenDate === getTodayDateString();
+
+  const altDate = new Date(baseDate);
+  altDate.setDate(baseDate.getDate() + (tier === 1 ? 1 : 2));
+  const altStr = `${altDate.getFullYear()}-${String(altDate.getMonth() + 1).padStart(2, "0")}-${String(altDate.getDate()).padStart(2, "0")}`;
+  const formattedAlt = formatReadableDate(altStr);
+
+  const weatherNote = isToday
+    ? `Singapore weather (${weather.tempC}°C, ${weather.condition.toLowerCase()}) supports steady pacing.`
+    : "Check Singapore weather closer to the day for indoor vs outdoor timing.";
+
+  if (tier === 0) {
+    return {
+      verdictLabel: "Best Day — Go Ahead",
+      title: `Best day confirmed: ${formattedChosen}`,
+      window: "10:30 – 12:30",
+      rationale: `${formattedChosen} aligns strongly with "${wishText}". Your momentum is clear and steady—take the lead during the auspicious window. ${weatherNote}`,
+      prepTitle: `Warm-up step before ${formattedChosen}`,
+      prepRationale: `Write down your top 2 priorities for "${wishText}" ahead of time so you step in calm and prepared.`,
+    };
+  }
+
+  if (tier === 1) {
+    return {
+      verdictLabel: "Good with Right Timing",
+      title: `${formattedChosen} works well in the afternoon window`,
+      window: "14:30 – 16:30",
+      rationale: `${formattedChosen} is supportive for "${wishText}" if you wait for calmer afternoon energy, though ${formattedAlt} carries slightly higher momentum. ${weatherNote}`,
+      prepTitle: `Keep an eye on ${formattedAlt} as a backup`,
+      prepRationale: `If anything feels rushed on ${formattedChosen}, shifting the key move to ${formattedAlt} gives you extra breathing room.`,
+    };
+  }
+
+  return {
+    verdictLabel: "Better on a Nearby Day",
+    title: `Consider ${formattedAlt} instead of ${formattedChosen}`,
+    window: "11:00 – 13:00",
+    rationale: `${formattedChosen} carries slightly scattered energy for "${wishText}". Preparing today and making your main move on ${formattedAlt} gives a smoother outcome. ${weatherNote}`,
+    prepTitle: `Use ${formattedChosen} for quiet groundwork`,
+    prepRationale: `Draft notes, gather facts, or rehearse your plan on ${formattedChosen} without forcing an immediate decision.`,
+  };
+}
+
+/**
+ * Generates three Singapore-tailored auspicious activities locally on the front end.
+ * - "inspire": targets today and accounts for the current time of day + weather + chart.
+ * - "affirm": evaluates whether today or a chosen particular day is best for the user's wish.
  */
 function buildLocalOracleReading(mode, feelingRaw, targetDate) {
   const weather = WEATHER_PRESETS[appState.weatherIndex % WEATHER_PRESETS.length];
@@ -461,177 +596,303 @@ function buildLocalOracleReading(mode, feelingRaw, targetDate) {
   const chinese = getChineseAstrology(appState.user.dob, appState.user.birthTime);
   const segment = appState.user.segment || "adult";
   const safeMood = redactPersonalInfo(feelingRaw);
+  const timeCtx = getTimeOfDayContext();
 
-  const poolsBySegment = {
+  const signNote = western && chinese
+    ? `Tailored for ${western.name} (${western.element}) & ${chinese.element} ${chinese.animal} under ${chinese.palace}.`
+    : "Personalise with your birthday above for tailored Western & Zi Wei Dou Shu insights.";
+
+  if (mode === "affirm") {
+    const chosenDate = targetDate || getTodayDateString();
+    const formattedDate = formatReadableDate(chosenDate);
+    const evalResult = evaluateDayForWish(safeMood, chosenDate, western, chinese, weather);
+
+    const affirmActivities = [
+      {
+        id: `${Date.now()}-0`,
+        rank: "01",
+        title: evalResult.title,
+        category: evalResult.verdictLabel,
+        window: evalResult.window,
+        weatherFit: chosenDate === getTodayDateString() ? `${weather.tempC}°C · ${weather.condition}` : `Target: ${formattedDate}`,
+        rationale: `${evalResult.rationale} ${signNote}`,
+        targetDate: chosenDate,
+      },
+      {
+        id: `${Date.now()}-1`,
+        rank: "02",
+        title: evalResult.prepTitle,
+        category: "Preparation Move",
+        window: "09:30 – 11:00",
+        weatherFit: chosenDate === getTodayDateString() ? `${weather.tempC}°C · ${weather.condition}` : `Target: ${formattedDate}`,
+        rationale: `${evalResult.prepRationale} ${signNote}`,
+        targetDate: chosenDate,
+      },
+      {
+        id: `${Date.now()}-2`,
+        rank: "03",
+        title: segment === "teen"
+          ? "Share your plan with a trusted friend before acting"
+          : segment === "elderly"
+            ? "Take a calm tea break to double-check details"
+            : "Pair your move with a 15-minute reset walk or kopi break",
+        category: "Supportive Luck Boost",
+        window: "16:30 – 18:00",
+        weatherFit: chosenDate === getTodayDateString() ? `${weather.tempC}°C · ${weather.condition}` : `Target: ${formattedDate}`,
+        rationale: `Keeps your mindset grounded around "${safeMood}" on ${formattedDate}. ${signNote}`,
+        targetDate: chosenDate,
+      },
+    ];
+
+    const hues = ["Electric Violet", "Warm Marigold", "Jade Mint", "Crisp Ivory"];
+    const luckyHue = hues[(weather.tempC + chosenDate.charCodeAt(chosenDate.length - 1)) % hues.length];
+
+    return {
+      mode,
+      date: chosenDate,
+      dateLabel: formattedDate,
+      verdictLabel: evalResult.verdictLabel,
+      luckyWindow: evalResult.window,
+      luckyHue,
+      activities: affirmActivities,
+    };
+  }
+
+  // "Inspire Me" mode: strictly for today, taking note of current time of day
+  const todayStr = getTodayDateString();
+  const timePools = {
     adult: {
-      indoor: [
+      morning: [
         {
-          title: "Tidy your desk & map one bold career move",
-          category: "Financial & Career Move",
-          window: "10:30 – 12:30",
-          rationale: "Clears stagnant energy while rain or midday heat stays outside. Ideal for reviewing finances or sending a thoughtful proposal.",
+          title: weather.isOutdoorFriendly ? "Breezy morning walk along MacRitchie or Marina Barrage" : "Tidy your desk & map one bold career move",
+          category: weather.isOutdoorFriendly ? "Wellness & Recharge" : "Financial & Career Move",
+          rationale: "Morning clarity sets an energetic tone before midday heat or meetings kick in.",
         },
+        {
+          title: "Coffee catch-up in Tiong Bahru or a focused inbox clear",
+          category: "Social & Networking",
+          rationale: "Late-morning hours favour crisp communication and timely introductions.",
+        },
+        {
+          title: "Review one personal finance or savings milestone over lunch",
+          category: "Financial & Career Move",
+          rationale: "Midday resource energy helps practical money decisions feel effortless.",
+        },
+      ],
+      afternoon: [
         {
           title: "Solo kopi or matcha reset at a quiet neighbourhood cafe",
           category: "Wellness & Recharge",
-          window: "14:30 – 16:30",
-          rationale: "Gives your mind breathing room away from back-to-back notifications and helps you make decisions without rush.",
+          rationale: "Afternoon stillness gives your mind breathing room away from nonstop notifications.",
         },
         {
           title: "Send a warm voice note to an ally or mentor",
           category: "Social & Networking",
-          window: "17:00 – 19:00",
-          rationale: "Strengthens helpful connections in your Social Palace without requiring heavy travel across town.",
+          rationale: "Late-afternoon social energy strengthens supportive connections without crossing town.",
         },
         {
-          title: "Declutter 15 items in your wardrobe or living corner",
-          category: "Home & Decluttering",
-          window: "19:30 – 21:00",
-          rationale: "Opens fresh Fengshui flow at home and reduces decision fatigue for the rest of the week.",
+          title: weather.isOutdoorFriendly ? "Sunset museum or waterfront stroll before dinner" : "Knock out one creative task indoors before 6 PM",
+          category: "Career & Inspiration",
+          rationale: "Turns the afternoon dip into an easy, rewarding win.",
         },
       ],
-      outdoor: [
+      evening: [
         {
-          title: "Breezy morning walk along MacRitchie or Marina Barrage",
+          title: weather.isOutdoorFriendly ? "Cool evening stroll along East Coast or Singapore River" : "Cook or pick up a warm comforting dinner nearby",
           category: "Wellness & Recharge",
-          window: "08:00 – 10:00",
-          rationale: "Clear, comfortable skies support grounded thinking before the sun peaks.",
+          rationale: "Evening temperatures ease up, helping your mind unwind from the workday.",
         },
         {
-          title: "Coffee catch-up in Tiong Bahru or Joo Chiat",
-          category: "Social & Networking",
-          window: "11:00 – 13:00",
-          rationale: "Fresh air and lively neighbourhood energy spark lucky conversations and timely introductions.",
+          title: "Declutter 15 items in your room or living corner",
+          category: "Home & Decluttering",
+          rationale: "Clears stagnant energy at home and sets up calmer Fengshui for tomorrow.",
         },
         {
-          title: "Visit a museum gallery then review your monthly savings goal",
-          category: "Financial & Career Move",
-          window: "15:00 – 17:30",
-          rationale: "Pairs visual inspiration with practical clarity so big plans feel effortless.",
+          title: "Jot down 3 wins from today & prep tomorrow's top priority",
+          category: "Mindset & Planning",
+          rationale: "Nighttime reflection locks in confidence without rushing.",
+        },
+      ],
+      night: [
+        {
+          title: "10-minute digital sunset & herbal tea wind-down",
+          category: "Wellness & Recharge",
+          rationale: "Late-night hours favour gentle rest over heavy decisions.",
+        },
+        {
+          title: "Lay out tomorrow's outfit and top 1 goal before bed",
+          category: "Home & Preparation",
+          rationale: "Reduces morning friction so tomorrow starts auspiciously.",
+        },
+        {
+          title: "Read 10 pages or listen to calm ambient tracks",
+          category: "Inner Peace",
+          rationale: "Supports deeper sleep and fresh intuition tomorrow morning.",
         },
       ],
     },
     teen: {
-      indoor: [
+      morning: [
         {
           title: "25-minute focused study sprint with a lo-fi playlist",
           category: "Study & Exam Preps",
-          window: "10:00 – 12:00",
-          rationale: "Indoor calm boosts memory retention while keeping stress low.",
+          rationale: "Morning focus boosts memory retention while keeping stress low.",
         },
         {
-          title: "Curate a moodboard or shoot a short creative clip indoors",
+          title: weather.isOutdoorFriendly ? "Photo walk through Haji Lane or Chinatown murals" : "Curate a moodboard or creative clip indoors",
           category: "Creative & Digital Expressions",
-          window: "15:00 – 17:00",
-          rationale: "Channels restless curiosity into something playful you can share with friends.",
+          rationale: "Channels fresh morning curiosity into something fun to share.",
         },
         {
-          title: "Bubble tea & board games hang at a sheltered mall",
+          title: "Hawker lunch & catch-up with classmates",
           category: "Social Hangouts & Explorations",
-          window: "17:30 – 19:30",
-          rationale: "Keeps plans dry and upbeat with zero weather hassle.",
+          rationale: "Balances productive focus with upbeat social energy.",
         },
       ],
-      outdoor: [
+      afternoon: [
         {
-          title: "Cycle or skate along East Coast Park before sunset",
-          category: "Sports & Activity Plays",
-          window: "17:00 – 18:45",
-          rationale: "Breezy coastal weather lifts mood and shakes off screen fatigue.",
-        },
-        {
-          title: "Photo walk through Haji Lane or Chinatown murals",
-          category: "Creative & Digital Expressions",
-          window: "10:00 – 11:45",
-          rationale: "Bright natural light makes spontaneous street snaps pop.",
-        },
-        {
-          title: "Library study session + hawker lunch with classmates",
+          title: "Library or cafe study sprint + iced matcha treat",
           category: "Study & Exam Preps",
-          window: "12:00 – 14:30",
-          rationale: "Balances productive focus with fun social energy.",
+          rationale: "Keeps afternoon momentum steady in a comfortable sheltered spot.",
+        },
+        {
+          title: weather.isOutdoorFriendly ? "Cycle or skate along East Coast Park before sunset" : "Bubble tea & board games hang at a sheltered mall",
+          category: "Sports & Social Plays",
+          rationale: "Shakes off screen fatigue and lifts your mood for the evening.",
+        },
+        {
+          title: "Organise your notes or creative project folder",
+          category: "Creative & Digital Expressions",
+          rationale: "Gives you a clean slate before dinner.",
+        },
+      ],
+      evening: [
+        {
+          title: weather.isOutdoorFriendly ? "Evening jog or basketball shootaround with friends" : "Cozy gaming or playlist swap with friends",
+          category: "Social Hangouts & Explorations",
+          rationale: "Cooler evening air or sheltered hangouts keep energy playful.",
+        },
+        {
+          title: "Sketch, journal, or edit a short reel from today",
+          category: "Creative & Digital Expressions",
+          rationale: "Evening calm sparks authentic creative ideas.",
+        },
+        {
+          title: "Pack your bag and set a chill morning alarm",
+          category: "Study & Prep",
+          rationale: "Makes tomorrow's start effortless.",
+        },
+      ],
+      night: [
+        {
+          title: "Screen-off stretch & chill music before sleep",
+          category: "Wellness & Recharge",
+          rationale: "Protects your rest so tomorrow's energy stays sharp.",
+        },
+        {
+          title: "Write 3 quick thoughts in your notes app",
+          category: "Creative & Reflection",
+          rationale: "Clears your head before lights out.",
+        },
+        {
+          title: "Pick one fun thing to look forward to tomorrow morning",
+          category: "Mindset & Prep",
+          rationale: "Sets an optimistic tone for tomorrow.",
         },
       ],
     },
     elderly: {
-      indoor: [
+      morning: [
         {
-          title: "Light indoor stretching & warm herbal tea ritual",
+          title: weather.isOutdoorFriendly ? "Morning Tai Chi or stroll at Botanic Gardens" : "Light indoor stretching & warm herbal tea ritual",
           category: "Health & Gentle Movement",
-          window: "09:00 – 10:30",
-          rationale: "Keeps joints comfortable indoors when weather turns humid or rainy.",
+          rationale: "Morning energy supports vitality and gentle circulation.",
         },
         {
-          title: "Call a grandchild or share an old family recipe photo",
-          category: "Family & Grandparenting",
-          window: "14:00 – 16:00",
-          rationale: "Brings warmth and connection to your household luck today.",
-        },
-        {
-          title: "Calm calligraphy, reading, or listening to heritage tunes",
+          title: "Visit a neighbourhood heritage spot or market for fresh fruit",
           category: "Spiritual & Cultural",
-          window: "16:30 – 18:00",
-          rationale: "Nurtures steady breath and peaceful focus.",
+          rationale: "Aligns peacefully with morning almanac energy.",
+        },
+        {
+          title: "Enjoy warm kopi & chat with a neighbour or friend",
+          category: "Family & Community",
+          rationale: "Brings cheerful connection to the start of your day.",
         },
       ],
-      outdoor: [
+      afternoon: [
         {
-          title: "Early Tai Chi or stroll at Botanic Gardens",
-          category: "Outdoor Light Exercises",
-          window: "07:30 – 09:00",
-          rationale: "Cool morning air supports vitality and gentle circulation.",
-        },
-        {
-          title: "Visit a neighbourhood temple or heritage centre",
+          title: "Calm calligraphy, reading, or heritage music indoors",
           category: "Spiritual & Cultural",
-          window: "09:30 – 11:00",
-          rationale: "Aligns peacefully with today's almanac energy for gratitude and clarity.",
+          rationale: "Keeps you cool and peaceful during the warmer afternoon.",
         },
         {
-          title: "Afternoon tea & fresh fruit market run with family",
+          title: "Call a grandchild or share a favourite family recipe photo",
           category: "Family & Grandparenting",
-          window: "16:30 – 18:00",
-          rationale: "Pleasant late-afternoon breeze makes errands enjoyable.",
+          rationale: "Brings warmth and auspicious harmony to your household.",
+        },
+        {
+          title: weather.isOutdoorFriendly ? "Late-afternoon park stroll as breeze picks up" : "Gentle seated mobility stretches at home",
+          category: "Health & Gentle Movement",
+          rationale: "Keeps joints comfortable before dinner.",
+        },
+      ],
+      evening: [
+        {
+          title: "Warm nourishing soup dinner with family",
+          category: "Family & Grandparenting",
+          rationale: "Evening family meals nourish gratitude and closeness.",
+        },
+        {
+          title: weather.isOutdoorFriendly ? "Short post-dinner walk around the neighbourhood" : "Relaxing herbal tea & favourite classic show",
+          category: "Health & Gentle Movement",
+          rationale: "Supports easy digestion and restful sleep.",
+        },
+        {
+          title: "Quiet gratitude reflection before bedtime",
+          category: "Spiritual & Cultural",
+          rationale: "Centers calm breath and peaceful thoughts.",
+        },
+      ],
+      night: [
+        {
+          title: "Warm foot soak or gentle breathing exercise",
+          category: "Health & Gentle Movement",
+          rationale: "Relaxes tired muscles for deeper rest tonight.",
+        },
+        {
+          title: "Sip warm water and dim room lights early",
+          category: "Wellness & Recharge",
+          rationale: "Supports steady sleep rhythms overnight.",
+        },
+        {
+          title: "Set out comfortable walking shoes for tomorrow morning",
+          category: "Tomorrow Prep",
+          rationale: "Welcomes fresh morning luck tomorrow.",
         },
       ],
     },
   };
 
-  const chosenPool = weather.isOutdoorFriendly
-    ? poolsBySegment[segment].outdoor
-    : poolsBySegment[segment].indoor;
-
-  const signNote = western && chinese
-    ? `Tailored for ${western.name} (${western.element}) & ${chinese.element} ${chinese.animal} under ${chinese.palace}.`
-    : "Add your birthday above to layer Western & Zi Wei Dou Shu chart notes onto each card.";
-
-  const activities = chosenPool.slice(0, 3).map((item, idx) => {
-    let customTitle = item.title;
-    let customRationale = `${item.rationale} ${signNote}`;
-
-    if (mode === "affirm" && safeMood && idx === 0) {
-      customTitle = `Green light: ${safeMood}`;
-      customRationale = `Your intention aligns well with ${weather.condition.toLowerCase()} weather today. Take it step by step during the peak window. ${signNote}`;
-    }
-
-    return {
-      id: `${Date.now()}-${idx}`,
-      rank: `0${idx + 1}`,
-      title: customTitle,
-      category: item.category,
-      window: item.window,
-      weatherFit: `${weather.tempC}°C · ${weather.condition}`,
-      rationale: customRationale,
-      targetDate: targetDate || getTodayDateString(),
-    };
-  });
+  const chosenPool = timePools[segment][timeCtx.period] || timePools.adult.afternoon;
+  const activities = chosenPool.slice(0, 3).map((item, idx) => ({
+    id: `${Date.now()}-${idx}`,
+    rank: `0${idx + 1}`,
+    title: item.title,
+    category: item.category,
+    window: timeCtx.windows[idx] || timeCtx.windows[0],
+    weatherFit: `${weather.tempC}°C · ${weather.condition}`,
+    rationale: `${item.rationale} ${signNote}`,
+    targetDate: todayStr,
+  }));
 
   const hues = ["Electric Violet", "Warm Marigold", "Jade Mint", "Crisp Ivory"];
   const luckyHue = hues[(weather.tempC + activities.length) % hues.length];
 
   return {
     mode,
-    date: targetDate || getTodayDateString(),
+    date: todayStr,
+    dateLabel: formatReadableDate(todayStr),
+    timePeriodLabel: `${timeCtx.label} (${timeCtx.formattedTime})`,
     luckyWindow: activities[0].window,
     luckyHue,
     activities,
@@ -643,6 +904,7 @@ function buildLocalOracleReading(mode, feelingRaw, targetDate) {
  * and attaches working click handlers to every "Accept Activity (+2 Coins)" button.
  */
 function renderResultsSection() {
+  const resultsSection = document.getElementById("results-section");
   const emptyBox = document.getElementById("results-empty");
   const loadingBox = document.getElementById("results-loading");
   const grid = document.getElementById("results-grid");
@@ -653,7 +915,8 @@ function renderResultsSection() {
   if (loadingBox) loadingBox.classList.add("is-hidden");
 
   if (!appState.lastReading) {
-    if (emptyBox) emptyBox.classList.remove("is-hidden");
+    if (resultsSection) resultsSection.classList.add("is-hidden");
+    if (emptyBox) emptyBox.classList.add("is-hidden");
     if (grid) grid.classList.add("is-hidden");
     if (luckInfo) luckInfo.classList.add("is-hidden");
     if (disclosure) disclosure.classList.add("is-hidden");
@@ -661,6 +924,7 @@ function renderResultsSection() {
   }
 
   const reading = appState.lastReading;
+  if (resultsSection) resultsSection.classList.remove("is-hidden");
   if (emptyBox) emptyBox.classList.add("is-hidden");
   if (grid) {
     grid.classList.remove("is-hidden");
@@ -676,8 +940,8 @@ function renderResultsSection() {
   if (metaLine) {
     metaLine.textContent =
       reading.mode === "affirm"
-        ? `Affirmation reading for ${reading.date} · Accept any move below to earn +2 Coins.`
-        : `Daily inspiration for ${reading.date} · Accept any move below to earn +2 Coins.`;
+        ? `Best-day check for ${reading.dateLabel || reading.date} (${reading.verdictLabel || "Affirmation"}) · Accept any move below to earn +2 Coins.`
+        : `Today's ${reading.timePeriodLabel || ""} inspiration (${reading.dateLabel || reading.date}) · Accept any move below to earn +2 Coins.`;
   }
 
   reading.activities.forEach((act) => {
@@ -776,11 +1040,15 @@ function runOracleReading(mode) {
   const feelingInput = document.getElementById("feeling-input");
   const feelingError = document.getElementById("feeling-error");
   const targetDateInput = document.getElementById("reading-date-input");
-  const segmentSelect = document.getElementById("segment-select");
+  const insufficientBar = document.getElementById("insufficient-coins-bar");
+  const insufficientText = document.getElementById("insufficient-coins-text");
 
   if (feelingError) {
     feelingError.classList.add("is-hidden");
     feelingError.textContent = "";
+  }
+  if (insufficientBar) {
+    insufficientBar.classList.add("is-hidden");
   }
 
   const feelingText = feelingInput ? feelingInput.value.trim() : "";
@@ -795,13 +1063,14 @@ function runOracleReading(mode) {
 
   const cost = mode === "affirm" ? 1 : 2;
   if (appState.coins < cost) {
-    showStatusBanner(`You need ${cost} Coin(s) for this reading. Claim Daily Check-In or Top Up!`);
-    switchView("topup");
+    const actionName = mode === "affirm" ? "Affirm" : "Inspire Me";
+    const msg = `You need ${cost} ${cost === 1 ? "Coin" : "Coins"} for ${actionName} (you have ${appState.coins}). Top up to continue.`;
+    if (insufficientText) insufficientText.textContent = msg;
+    if (insufficientBar) insufficientBar.classList.remove("is-hidden");
+    const topupBtn = document.getElementById("insufficient-topup-btn");
+    if (topupBtn) topupBtn.focus();
+    showStatusBanner(msg);
     return;
-  }
-
-  if (segmentSelect) {
-    appState.user.segment = segmentSelect.value;
   }
 
   appState.coins -= cost;
@@ -812,10 +1081,16 @@ function runOracleReading(mode) {
     delta: -cost,
   });
 
-  const targetDate = targetDateInput && targetDateInput.value ? targetDateInput.value : getTodayDateString();
+  const targetDate =
+    mode === "inspire"
+      ? getTodayDateString()
+      : targetDateInput && targetDateInput.value
+        ? targetDateInput.value
+        : getTodayDateString();
   appState.lastReading = buildLocalOracleReading(mode, feelingText, targetDate);
 
   saveState();
+  renderTimeOfDayLabel();
   renderHeaderAndWallet();
   renderResultsSection();
   showStatusBanner(
@@ -823,6 +1098,15 @@ function runOracleReading(mode) {
       ? "Affirmation ready! (-1 Coin)"
       : "Fresh Top 3 inspiration ready! (-2 Coins)"
   );
+
+  const resultsSection = document.getElementById("results-section");
+  if (resultsSection) {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    resultsSection.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }
 }
 
 /**
@@ -1027,43 +1311,13 @@ function wireAllEventListeners() {
     dismissBtn.addEventListener("click", hideStatusBanner);
   }
 
-  // Location & Weather controls
-  const locSelect = document.getElementById("location-select");
-  if (locSelect) {
-    locSelect.addEventListener("change", () => {
-      appState.locationKey = locSelect.value;
-      saveState();
-      renderWeatherCard();
-      renderAstrologyAndProfileForms();
-    });
+  // Profile Daily Check-In button
+  const profileCheckInBtn = document.getElementById("profile-checkin-btn");
+  if (profileCheckInBtn) {
+    profileCheckInBtn.addEventListener("click", handleDailyCheckIn);
   }
 
-  const customLocInput = document.getElementById("custom-location-input");
-  if (customLocInput) {
-    customLocInput.addEventListener("input", () => {
-      appState.customLocation = customLocInput.value;
-      saveState();
-      renderAstrologyAndProfileForms();
-    });
-  }
-
-  const cycleWeatherBtn = document.getElementById("cycle-weather-btn");
-  if (cycleWeatherBtn) {
-    cycleWeatherBtn.addEventListener("click", () => {
-      appState.weatherIndex = (appState.weatherIndex + 1) % WEATHER_PRESETS.length;
-      saveState();
-      renderWeatherCard();
-      showStatusBanner(`Weather preview updated to ${WEATHER_PRESETS[appState.weatherIndex].condition}.`);
-    });
-  }
-
-  // Daily Check-In buttons
-  ["daily-checkin-btn", "profile-checkin-btn"].forEach((id) => {
-    const btn = document.getElementById(id);
-    if (btn) btn.addEventListener("click", handleDailyCheckIn);
-  });
-
-  // Feeling character counter & Quick Prompt buttons
+  // Feeling character counter
   const feelingInput = document.getElementById("feeling-input");
   const charCount = document.getElementById("feeling-char-count");
   if (feelingInput && charCount) {
@@ -1071,17 +1325,6 @@ function wireAllEventListeners() {
       charCount.textContent = `${feelingInput.value.length}/240`;
     });
   }
-
-  document.querySelectorAll(".prompt-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const promptText = btn.getAttribute("data-prompt") || "";
-      if (feelingInput) {
-        feelingInput.value = promptText;
-        if (charCount) charCount.textContent = `${promptText.length}/240`;
-        feelingInput.focus();
-      }
-    });
-  });
 
   // Reading target date default
   const dateInput = document.getElementById("reading-date-input");
@@ -1101,6 +1344,21 @@ function wireAllEventListeners() {
   const inspireBtn = document.getElementById("inspire-btn");
   if (inspireBtn) {
     inspireBtn.addEventListener("click", () => runOracleReading("inspire"));
+  }
+
+  // Toggle Personalise with Astrology panel on Today page
+  const toggleAstroBtn = document.getElementById("toggle-astro-btn");
+  if (toggleAstroBtn) {
+    toggleAstroBtn.addEventListener("click", () => {
+      setAstroPanelOpen(!isAstroPanelOpen, true);
+    });
+  }
+
+  const closeAstroBtn = document.getElementById("close-astro-btn");
+  if (closeAstroBtn) {
+    closeAstroBtn.addEventListener("click", () => {
+      setAstroPanelOpen(false, true);
+    });
   }
 
   // Quick Astrology Personalisation form on Today page
@@ -1374,12 +1632,46 @@ function renderTopUpControls() {
 }
 
 /**
+ * Shows or hides the "Personalise with Astrology" card on the Today page
+ * so initial access remains focused on "Ask Your Oracle".
+ */
+function setAstroPanelOpen(open, shouldFocus = false) {
+  isAstroPanelOpen = Boolean(open);
+  const workspaceGrid = document.getElementById("workspace-grid");
+  const astroCard = document.getElementById("astrology-card");
+  const toggleBtn = document.getElementById("toggle-astro-btn");
+
+  if (workspaceGrid) {
+    workspaceGrid.classList.toggle("is-astro-open", isAstroPanelOpen);
+  }
+  if (astroCard) {
+    astroCard.classList.toggle("is-hidden", !isAstroPanelOpen);
+  }
+  if (toggleBtn) {
+    toggleBtn.setAttribute("aria-expanded", String(isAstroPanelOpen));
+  }
+
+  renderAstrologyAndProfileForms();
+
+  if (shouldFocus) {
+    if (isAstroPanelOpen) {
+      const dobInput = document.getElementById("quick-dob");
+      if (dobInput) dobInput.focus();
+    } else if (toggleBtn) {
+      toggleBtn.focus();
+    }
+  }
+}
+
+/**
  * Starts the application once the browser finishes reading the HTML file.
  */
 function initApp() {
   wireAllEventListeners();
+  setAstroPanelOpen(false, false);
   switchView(appState.activeView || "today");
   renderWeatherCard();
+  renderTimeOfDayLabel();
   renderAstrologyAndProfileForms();
   renderHeaderAndWallet();
   renderTopUpControls();

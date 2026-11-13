@@ -283,11 +283,22 @@ textarea {
 .eyebrow-meta {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--ink-secondary);
+}
+
+.hero-weather-inline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.hero-weather-temp {
+  color: var(--ink-primary);
+  font-weight: 700;
 }
 
 .hero-title {
@@ -298,13 +309,13 @@ textarea {
   letter-spacing: -0.03em;
   color: var(--ink-primary);
   text-wrap: balance;
-  max-width: 16ch;
+  max-width: 24ch;
 }
 
 .hero-subtitle {
   font-size: 1.0625rem;
   color: var(--ink-secondary);
-  max-width: 54ch;
+  max-width: 66ch;
 }
 
 /* Weather & Wallet Card */
@@ -317,6 +328,20 @@ textarea {
   flex-direction: column;
   justify-content: space-between;
   gap: 16px;
+}
+
+.context-card-compact {
+  padding: 16px 20px;
+  gap: 8px;
+}
+
+.context-card-compact .weather-header {
+  margin-bottom: 0;
+}
+
+.weather-compact-advice {
+  font-size: 0.875rem;
+  color: var(--ink-secondary);
 }
 
 .weather-header {
@@ -674,6 +699,96 @@ textarea {
   grid-template-columns: 1fr;
   gap: 12px;
   margin-top: 4px;
+}
+
+/* Ask Your Oracle Two-Path Flow Boxes */
+.oracle-path-box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+}
+
+.oracle-path-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.oracle-path-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.oracle-path-title {
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+}
+
+.oracle-path-desc {
+  font-size: 0.9375rem;
+  color: var(--ink-secondary);
+}
+
+.oracle-affirm-footer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+/* Personalisation Prompt Bar */
+.personalise-prompt-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+}
+
+.personalise-prompt-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.personalise-prompt-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+}
+
+.personalise-prompt-desc {
+  font-size: 0.875rem;
+  color: var(--ink-secondary);
+}
+
+/* Insufficient Coins Top Up Prompt */
+.insufficient-coins-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-md);
+  color: var(--danger-ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
 }
 
 /* Astrology Chart Readout */
@@ -1291,6 +1406,21 @@ textarea {
     grid-template-columns: 1fr 1fr;
   }
 
+  .personalise-prompt-bar,
+  .insufficient-coins-bar {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .oracle-path-row {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .oracle-affirm-footer {
+    grid-template-columns: 1fr auto;
+  }
+
   .checkbox-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -1314,14 +1444,17 @@ textarea {
 
 @media (min-width: 1024px) {
   .hero-grid {
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 32px;
+    grid-template-columns: 1fr;
   }
 
   .workspace-grid {
-    grid-template-columns: 1.35fr 0.9fr;
+    grid-template-columns: 1fr;
     gap: 24px;
     align-items: start;
+  }
+
+  .workspace-grid.is-astro-open {
+    grid-template-columns: 1.35fr 0.9fr;
   }
 
   .activities-grid {
