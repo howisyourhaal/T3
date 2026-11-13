@@ -258,19 +258,21 @@ function hideStatusBanner() {
  * by toggling CSS classes on the HTML <section> tags and updating active nav tabs.
  */
 function switchView(targetView) {
-  appState.activeView = targetView;
+  const allowedViews = new Set(["today", "profile", "topup"]);
+  const safeView = allowedViews.has(targetView) ? targetView : "today";
+  appState.activeView = safeView;
   saveState();
 
   const sections = document.querySelectorAll(".view-section");
   sections.forEach((sec) => {
-    const isTarget = sec.id === `view-${targetView}`;
+    const isTarget = sec.id === `view-${safeView}`;
     sec.classList.toggle("is-active", isTarget);
   });
 
   const navButtons = document.querySelectorAll("[data-nav-target]");
   navButtons.forEach((btn) => {
     const target = btn.getAttribute("data-nav-target");
-    const matches = target === targetView;
+    const matches = target === safeView;
     if (btn.classList.contains("nav-link") || btn.classList.contains("mobile-tab")) {
       btn.classList.toggle("is-active", matches);
       if (matches) {
@@ -731,7 +733,7 @@ function renderResultsSection() {
     acceptBtn.type = "button";
     acceptBtn.className = alreadyAccepted ? "btn btn-secondary btn-full" : "btn btn-mint btn-full";
     acceptBtn.disabled = alreadyAccepted;
-    acceptBtn.textContent = alreadyAccepted ? "Saved to Tracker" : "Accept Activity (+2 Coins)";
+    acceptBtn.textContent = alreadyAccepted ? "Accepted (+2 Coins)" : "Accept Activity (+2 Coins)";
     acceptBtn.addEventListener("click", () => handleAcceptActivity(act));
 
     card.appendChild(top);
@@ -741,7 +743,7 @@ function renderResultsSection() {
 }
 
 /**
- * Adds a proposed activity to the user's Activity Tracker and rewards +2 Coins
+ * Adds a proposed activity to the user's accepted list and rewards +2 Coins
  * to their wallet, as described in the project brief.
  */
 function handleAcceptActivity(activity) {
@@ -765,7 +767,7 @@ function handleAcceptActivity(activity) {
   renderHeaderAndWallet();
   renderResultsSection();
   renderTrackerList();
-  showStatusBanner("Activity saved to Tracker! You earned +2 Coins.");
+  showStatusBanner("Activity accepted! You earned +2 Coins.");
 }
 
 /**
